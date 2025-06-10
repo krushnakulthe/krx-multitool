@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRX – Ultimate Multi-Tool Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Required Libraries via CDN -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    
+    <!-- Embedded CSS -->
+    <style>
+        :root {
+            --bg-dark-blue: #0D0D2B; --glow-purple: #1F1F3B; --accent-purple: #A259FF; --accent-pink: #FF2D9C; --bright-blue: #00A8FF; --text-white: #FFFFFF; --text-gray: #AFAFAF; --ui-black: #1B1B2F; --sidebar-bg: #12151a; --glow-shadow: 0 0 15px rgba(162, 89, 255, 0.5); --glow-shadow-blue: 0 0 15px rgba(0, 168, 255, 0.6);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Orbitron', sans-serif; background-color: var(--bg-dark-blue); background-image: radial-gradient(circle at 100% 0%, var(--glow-purple) 0%, transparent 40%), radial-gradient(circle at 0% 100%, var(--glow-purple) 0%, transparent 40%); color: var(--text-white); line-height: 1.6; overflow-x: hidden; }
+        h1, h2, h3 { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        a { color: var(--accent-purple); text-decoration: none; transition: color 0.3s ease; }
+        a:hover { color: var(--text-white); }
+        .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: rgba(13, 13, 43, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(162, 89, 255, 0.2); position: sticky; top: 0; z-index: 1000; }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 1.8rem; font-weight: 900; color: var(--text-white); text-shadow: 0 0 10px var(--accent-purple); }
+        .logo-svg { width: 40px; height: 40px; }
+        /* --- Logo Animation --- */
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes rotateIn { from { transform: rotate(-20deg) scale(0.5); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
+        .logo-svg .k-shape { fill: url(#logoGradient); transition: all 0.3s ease; animation: slideIn 0.8s 0.2s cubic-bezier(0.25, 1, 0.5, 1) both; }
+        .logo-svg .r-shape { fill: var(--bright-blue); transition: all 0.3s ease; filter: drop-shadow(0 0 5px var(--bright-blue)); animation: slideIn 0.8s 0.4s cubic-bezier(0.25, 1, 0.5, 1) both; }
+        .logo-svg .x-shape { fill: var(--bright-blue); transition: all 0.3s ease; filter: drop-shadow(0 0 5px var(--bright-blue)); animation: rotateIn 0.7s 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; }
+        .logo:hover .k-shape { transform: translateX(-2px); }
+        .logo:hover .x-shape { transform: rotate(10deg) scale(1.1); }
+        .nav-links { display: flex; list-style: none; }
+        .nav-links li { margin-left: 2rem; }
+        .nav-link { font-weight: 700; text-transform: uppercase; position: relative; padding-bottom: 5px; cursor: pointer; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); transition: width 0.3s ease; box-shadow: 0 0 8px #D14DFF; }
+        .nav-link:hover::after { width: 100%; }
+        .hamburger { display: none; background: none; border: none; cursor: pointer; }
+        .hamburger .bar { display: block; width: 25px; height: 3px; margin: 5px auto; background-color: var(--text-white); transition: all 0.3s ease-in-out; }
+        .app-container { display: flex; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); padding: 1.5rem; height: calc(100vh - 70px); position: sticky; top: 70px; box-shadow: 5px 0 15px rgba(162, 89, 255, 0.1); transition: all 0.3s ease; overflow-y: auto; }
+        .sidebar.collapsed { width: 70px; padding: 1.5rem 0; }
+        .sidebar.collapsed .tool-link span, .sidebar.collapsed .tool-section h3 { display: none; }
+        .sidebar.collapsed .tool-link { justify-content: center; }
+        .sidebar.collapsed .sidebar-toggle { transform: rotate(180deg); }
+        .sidebar-toggle { position: absolute; top: 20px; right: -15px; width: 30px; height: 30px; background: var(--accent-purple); border: none; border-radius: 50%; color: white; font-size: 1.5rem; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: var(--glow-shadow); z-index: 10; transition: transform 0.3s ease; }
+        .tool-section h3 { color: var(--bright-blue); margin: 1.5rem 0 1rem 0; font-size: 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(0, 168, 255, 0.2); }
+        .tool-section:first-child h3 { margin-top: 0; }
+        .tool-section ul { list-style: none; }
+        .tool-link { display: flex; align-items: center; padding: 0.75rem; border-radius: 5px; color: var(--text-gray); transition: all 0.3s ease; font-size: 0.9rem; position: relative; overflow: hidden; }
+        .tool-link svg { width: 22px; height: 22px; margin-right: 15px; flex-shrink: 0; transition: all 0.3s ease; }
+        .tool-link::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, var(--accent-purple), transparent); opacity: 0.3; transition: left 0.4s ease; }
+        .tool-link:hover { color: var(--text-white); background-color: var(--ui-black); }
+        .tool-link:hover::before { left: 0; }
+        .tool-link:hover svg { transform: scale(1.1); filter: drop-shadow(0 0 5px var(--bright-blue)); }
+        .main-content { flex: 1; padding: 2rem; transition: margin-left 0.3s ease; }
+        .hero-section { text-align: center; padding: 4rem 1rem; border-radius: 15px; background: linear-gradient(135deg, rgba(31, 31, 59, 0.5), rgba(13, 13, 43, 0.5)); border: 1px solid rgba(162, 89, 255, 0.2); margin-bottom: 3rem; }
+        .hero-headline { font-size: 3rem; text-shadow: 0 0 20px var(--accent-purple), 0 0 10px var(--accent-pink); margin-bottom: 1rem; }
+        .hero-subheadline { font-size: 1.2rem; color: var(--text-gray); max-width: 600px; margin: 0 auto 2rem; }
+        .cta-button { padding: 12px 30px; border-radius: 50px; font-weight: 700; text-transform: uppercase; border: 2px solid transparent; transition: all 0.3s ease; cursor: pointer; }
+        .cta-button.primary { background-color: var(--accent-purple); color: var(--text-white); box-shadow: var(--glow-shadow); }
+        .cta-button.primary:hover { transform: translateY(-3px); box-shadow: 0 0 25px var(--accent-purple), 0 0 35px #D14DFF; }
+        .cta-button.secondary { border-color: var(--accent-purple); color: var(--accent-purple); }
+        .cta-button.secondary:hover { background-color: var(--accent-purple); color: var(--text-white); }
+        .section-title { text-align: center; margin-bottom: 2rem; font-size: 2rem; position: relative; padding-bottom: 10px; }
+        .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 3px; background: linear-gradient(90deg, var(--accent-purple), var(--bright-blue)); border-radius: 2px; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .tool-card { background-color: var(--ui-black); padding: 1.5rem; border-radius: 10px; border: 1px solid rgba(162, 89, 255, 0.2); transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; }
+        .tool-card:hover { transform: translateY(-5px); box-shadow: var(--glow-shadow); border-color: var(--accent-purple); }
+        .tool-card h3 { color: var(--text-white); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 12px; }
+        .tool-card h3 svg { width: 24px; height: 24px; transition: transform 0.3s ease; }
+        .tool-card:hover h3 svg { transform: scale(1.1) rotate(-5deg); filter: drop-shadow(0 0 5px var(--bright-blue)); }
+        .tool-card p { color: var(--text-gray); font-size: 0.9rem; flex-grow: 1; margin-bottom: 1rem; }
+        .tool-button { align-self: flex-start; background: none; border: 1px solid var(--bright-blue); color: var(--bright-blue); padding: 8px 15px; border-radius: 5px; font-family: 'Orbitron', sans-serif; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+        .tool-card:hover .tool-button { background-color: var(--bright-blue); color: var(--bg-dark-blue); box-shadow: var(--glow-shadow-blue); }
+        .main-footer { background-color: var(--sidebar-bg); padding: 2rem; margin-top: 3rem; border-top: 2px solid; border-image-source: linear-gradient(90deg, var(--accent-purple), var(--bright-blue)); border-image-slice: 1; box-shadow: 0 -5px 15px rgba(162, 89, 255, 0.1); text-align: center;}
+        .footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem; max-width: 1200px; margin: 0 auto; text-align: left; }
+        .footer-section { flex: 1; min-width: 250px; }
+        .footer-section.logo-section p { color: var(--text-gray); margin-top: 1rem; }
+        .footer-section.links h4, .footer-section.social h4 { color: var(--bright-blue); margin-bottom: 1rem; text-transform: uppercase; }
+        .footer-section ul { list-style: none; }
+        .footer-section li { margin-bottom: 0.5rem; }
+        .footer-section a { color: var(--text-gray); }
+        .footer-section a:hover { color: var(--text-white); }
+        .social-links { display: flex; gap: 1.5rem; }
+        .social-links a svg { width: 24px; height: 24px; fill: var(--text-gray); transition: all 0.3s ease; }
+        .social-links a:hover svg { fill: var(--text-white); transform: scale(1.2); filter: drop-shadow(0 0 8px var(--bright-blue)); }
+        .footer-bottom { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(162, 89, 255, 0.2); color: var(--text-gray); font-size: 0.9rem; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        body.modal-open .modal-overlay { opacity: 1; pointer-events: all; }
+        .modal { background-color: var(--ui-black); border: 1px solid var(--accent-purple); border-radius: 15px; box-shadow: 0 0 40px var(--accent-purple); width: 90%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; }
+        body.modal-open .modal { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(162, 89, 255, 0.2); }
+        .modal-close { background: none; border: none; color: var(--text-gray); font-size: 2.5rem; cursor: pointer; line-height: 1; transition: all 0.3s ease; }
+        .modal-close:hover { color: var(--text-white); transform: rotate(90deg); }
+        .modal-body { padding: 1.5rem; overflow-y: auto; }
+        .modal-body::-webkit-scrollbar { width: 8px; }
+        .modal-body::-webkit-scrollbar-track { background: var(--bg-dark-blue); }
+        .modal-body::-webkit-scrollbar-thumb { background-color: var(--accent-purple); border-radius: 10px; border: 2px solid var(--bg-dark-blue); }
+        .tool-description { color: var(--text-gray); margin-bottom: 1rem; border-left: 3px solid var(--bright-blue); padding-left: 1rem; }
+        .file-input-label { background-color: var(--accent-purple); color: var(--text-white); padding: 12px 20px; border-radius: 50px; cursor: pointer; display: inline-block; text-align: center; font-weight: 700; transition: all 0.3s ease; }
+        .file-input-label:hover, .file-input-label.active { transform: translateY(-2px); box-shadow: var(--glow-shadow); background: linear-gradient(45deg, var(--accent-pink), var(--accent-purple)); }
+        input[type="file"] { display: none; }
+        #file-list-display { margin-top: 1rem; padding: 0.5rem; border: 1px dashed var(--accent-purple); border-radius: 5px; min-height: 40px; color: var(--text-gray); }
+        #file-list-display p { margin-bottom: 0.25rem; }
+        .tool-options { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(162, 89, 255, 0.2); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-gray); font-weight: 700; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; background-color: var(--bg-dark-blue); border: 1px solid var(--accent-purple); color: var(--text-white); padding: 10px; border-radius: 5px; font-family: 'Orbitron', sans-serif; font-size: 1rem; }
+        .result-box { margin-top: 1rem; padding: 1rem; background-color: var(--bg-dark-blue); border: 1px solid var(--bright-blue); border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; min-height: 50px; font-size: 1.1rem; }
+        .draggable-list { list-style: none; margin-top: 1rem; padding: 0; }
+        .draggable-list li { background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 5px; margin-bottom: 0.5rem; cursor: grab; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--accent-purple); }
+        .draggable-list li.dragging { opacity: 0.5; background: var(--glow-purple); }
+        .copy-btn { padding: 5px 8px; font-size: 0.9rem; background-color: var(--bright-blue); border: none; border-radius: 5px; cursor: pointer; color: var(--bg-dark-blue); }
+        .processing-btn { width: 100%; padding: 12px; font-size: 1.2rem; margin-top: 1rem; }
+        .processing-btn:disabled { background: var(--text-gray); cursor: not-allowed; box-shadow: none; }
+        .button-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, var(--accent-purple), var(--bright-blue)); color: white; padding: 15px 30px; border-radius: 50px; z-index: 3000; opacity: 0; visibility: hidden; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 0 20px var(--bright-blue); }
+        .toast.show { opacity: 1; visibility: visible; bottom: 30px; }
+        #ffmpeg-log { background-color: #000; color: #0f0; font-family: monospace; height: 150px; overflow-y: scroll; padding: 10px; border-radius: 5px; margin-top: 1rem; white-space: pre-wrap; display: none; }
+        /* --- Tool-Specific Styles --- */
+        .color-picker-layout { display: grid; grid-template-columns: 100px 1fr; gap: 2rem; align-items: start; }
+        .color-input-wrapper { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .color-preview-box { width: 100px; height: 100px; border: 2px solid var(--text-gray); border-radius: 10px; cursor: pointer; }
+        .color-values-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+        .color-value-group { position: relative; }
+        .color-value-group input { padding-right: 45px; }
+        .color-value-group .copy-btn { position: absolute; right: 8px; top: 32px; }
+        .contrast-checker-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; align-items: center; text-align: center; margin-top: 1rem; }
+        .contrast-checker-grid .color-input-wrapper { margin: 0 auto; }
+        .contrast-ratio-display { font-size: 2rem; font-weight: 900; }
+        .contrast-status { font-size: 0.9rem; }
+        .pass { color: #2ecc71; }
+        .fail { color: #e74c3c; }
+        .passport-layout { display: grid; grid-template-columns: 1fr 200px; gap: 1rem; }
+        #passport-live-preview { border: 1px dashed var(--bright-blue); background-color: rgba(0,0,0,0.2); }
+        .cropper-container { position: relative; }
+        #cropper-guide-svg { position: absolute; top:0; left:0; width: 100%; height: 100%; pointer-events: none; }
+        #audio-controls { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; }
+        #audio-time { font-size: 1.2rem; color: var(--bright-blue); }
+
+        @media (max-width: 768px) { .footer-content { flex-direction: column; text-align: center; } .footer-section { text-align: center; } .social-links { justify-content: center; } .color-picker-layout, .passport-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <svg width="0" height="0" style="position:absolute"><defs>
+        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:var(--accent-purple);stop-opacity:1" /><stop offset="100%" style="stop-color:var(--accent-pink);stop-opacity:1" /></linearGradient>
+        <linearGradient id="iconGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--accent-purple)"/><stop offset="100%" stop-color="var(--bright-blue)"/></linearGradient>
+        <symbol id="icon-github" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.385.6.113.82-.26.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.8 24 17.3 24 12 24 5.373 18.627 0 12 0z"/></symbol>
+        <symbol id="icon-linkedin" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></symbol>
+    </defs></svg>
+
+    <header class="main-header">
+        <a href="#" class="logo">
+            <svg class="logo-svg" viewBox="0 0 100 100">
+                <g class="k-shape"><path d="M 20 25 L 20 75 L 35 75 L 35 60 L 55 75 L 65 68 L 42 50 L 65 32 L 55 25 L 35 40 L 35 25 Z" /></g>
+                <g class="r-shape"><path d="M 58 50 L 58 75 L 73 75 L 73 65 L 80 75 L 88 70 L 78 60 L 88 50 Z" /></g>
+                <g class="x-shape"><path d="M 80 25 L 90 25 L 75 50 L 90 75 L 80 75 L 70 58 L 60 75 L 50 75 L 65 50 L 50 25 L 60 25 L 70 42 Z" transform="translate(15, -15) scale(0.6)"/></g>
+            </svg>
+            <span>KRX</span>
+        </a>
+        <nav class="main-nav"><ul class="nav-links">
+            <li><a href="#" class="nav-link">Home</a></li>
+            <li><a href="#tools" class="nav-link">Tools</a></li>
+            <li><a href="#" class="nav-link" data-tool="about">About</a></li>
+            <li><a href="#" class="nav-link" data-tool="contact">Contact</a></li>
+        </ul></nav>
+        <button class="hamburger" id="hamburger-menu"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button>
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebar-toggle">›</button>
+            <div class="sidebar-content">
+                <!-- Sidebar content will be dynamically generated by JS -->
+            </div>
+        </aside>
+
+        <main class="main-content" id="main-content">
+            <section class="hero-section">
+                <h1 class="hero-headline">KRX ULTIMATE TOOL HUB</h1>
+                <p class="hero-subheadline">Your All-In-One Solution for Digital Productivity. Privacy-First. Powerful. Free.</p>
+                <div class="cta-buttons"><a href="#tools" class="cta-button primary">Explore Tools</a><a href="#" class="cta-button secondary" data-tool="about">Learn More</a></div>
+            </section>
+            <section class="tools-grid-section" id="tools">
+                <h2 class="section-title">All Tools</h2>
+                <div class="tools-grid" id="tools-grid-container">
+                    <!-- Tool cards will be dynamically injected here by JS -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section logo-section">
+                <a href="#" class="logo" style="font-size: 2rem;">
+                    <svg class="logo-svg" viewBox="0 0 100 100" style="width: 50px; height: 50px; animation: none;">
+                        <path class="k-shape" d="M 20 25 L 20 75 L 35 75 L 35 60 L 55 75 L 65 68 L 42 50 L 65 32 L 55 25 L 35 40 L 35 25 Z" />
+                        <path class="r-shape" d="M 58 50 L 58 75 L 73 75 L 73 65 L 80 75 L 88 70 L 78 60 L 88 50 Z" />
+                        <path class="x-shape" d="M 80 25 L 90 25 L 75 50 L 90 75 L 80 75 L 70 58 L 60 75 L 50 75 L 65 50 L 50 25 L 60 25 L 70 42 Z" transform="translate(15, -15) scale(0.6)"/>
+                    </svg>
+                    <span>KRX</span>
+                </a>
+                <p>A suite of powerful, client-side tools designed for privacy and productivity. All processing is done in your browser.</p>
+            </div>
+            <div class="footer-section links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#" class="nav-link" data-tool="about">About KRX</a></li>
+                    <li><a href="#" class="nav-link" data-tool="contact">Contact Us</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-section social">
+                <h4>Connect with the Developer</h4>
+                <div class="social-links">
+                    <a href="https://github.com/krushna-kulthe" target="_blank" rel="noopener noreferrer" title="GitHub">
+                        <svg><use xlink:href="#icon-github"></use></svg>
+                    </a>
+                    <a href="https://www.linkedin.com/in/krushna-kulthe-178550227/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+                        <svg><use xlink:href="#icon-linkedin"></use></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 KRX Tools. All Rights Reserved. Developed with ❤️ by <a href="https://github.com/krushna-kulthe" target="_blank" rel="noopener noreferrer" style="color:var(--bright-blue);">Krushna Kulthe</a>.</p>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="tool-modal-overlay">
+        <div class="modal" id="tool-modal">
+            <div class="modal-header"><h2 id="modal-title">Tool Title</h2><button class="modal-close" id="modal-close-btn">&times;</button></div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+    
+    <div id="toast-notification" class="toast"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const { PDFDocument, StandardFonts, rgb, degrees, PageSizes } = PDFLib;
+            const { createFFmpeg, fetchFile } = FFmpeg;
+            const ui = {
+                sidebarContent: document.querySelector('.sidebar-content'),
+                toolsGrid: document.getElementById('tools-grid-container'),
+                modalOverlay: document.getElementById('tool-modal-overlay'),
+                modalTitle: document.getElementById('modal-title'),
+                modalBody: document.getElementById('modal-body'),
+                modalClose: document.getElementById('modal-close-btn'),
+                toast: document.getElementById('toast-notification'),
+                hamburger: document.getElementById('hamburger-menu'),
+                navLinks: document.querySelector('.nav-links'),
+                sidebar: document.getElementById('sidebar'),
+                sidebarToggle: document.getElementById('sidebar-toggle'),
+                mainContent: document.getElementById('main-content'),
+            };
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+
+            setTimeout(() => showToast("Welcome to KRX Ultimate Tool Hub!"), 500);
+
+            const toolSections = {
+                "PDF Tools": [
+                    { id: 'merge-pdf', title: 'Merge PDF', desc: 'Combine multiple PDFs into one, with reordering & page counts.', icon: `<svg viewBox="0 0 24 24"><defs><linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#A259FF"/><stop offset="100%" stop-color="#FF2D9C"/></linearGradient></defs><path fill="url(#grad1)" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M12,18L9,15H11V13H13V15H15L12,18M13,11H11V5H13V11Z" /></svg>` },
+                    { id: 'split-pdf', title: 'Split PDF', desc: 'Extract specific pages or all pages into new PDF files.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M20,8L14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8M18,20H6V4H13V9H18V20M8,12V14H16V12H8M3,12L5,10V11H6V9L3,12M3,16L6,19V17H5V16L3,16Z" /></svg>` },
+                    { id: 'compress-pdf', title: 'Compress PDF', desc: 'Reduce PDF file size and see the compression ratio.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M20 4V8H16V4H20M22 2H14V10H22V2M16.5 6L18 7.5L19.5 6L21 7.5V10H14V7.5L15.5 9L18 6.5L15.5 4L14 5.5V2H21L16.5 6M8 20V16H4V20H8M10 22H2V14H10V22M7.5 18L6 16.5L4.5 18L3 16.5V14H10V16.5L8.5 15L6 17.5L8.5 20L10 18.5V22H3L7.5 18Z" /></svg>` },
+                    { id: 'pdf-to-jpg', title: 'PDF to Image', desc: 'Convert PDF pages to JPG, PNG, or WEBP images.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M20 8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8M18 20H6V4H13V9H18V20M8.5 17L11 13.5L12.5 15.5L14.5 12.5L17 17H8.5Z" /></svg>` },
+                    { id: 'pdf-to-text', title: 'PDF to Text', desc: 'Extract all text content from a PDF with one-click copy.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M20 8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8M18 20H6V4H13V9H18V20M8 12H16V14H8V12M8 16H13V18H8V16Z" /></svg>` },
+                    { id: 'jpg-to-pdf', title: 'Image to PDF', desc: 'Combine & reorder images into a PDF with page settings.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2M12 18L9.5 14.5L11.2 12.5L12.8 14.5L15.5 11L17 12.5L12 18Z" /></svg>` },
+                ],
+                "Image, Audio & Video": [
+                    { id: 'video-converter', title: 'Video Converter', desc: 'Convert video files on your device. Supports MP4, GIF, etc.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M17 10.5V7A1 1 0 0 0 16 6H4A1 1 0 0 0 3 7V17A1 1 0 0 0 4 18H16A1 1 0 0 0 17 17V13.5L21 17.5V6.5L17 10.5M10 15L12.05 13.5L10 12V15M7 15L9.05 13.5L7 12V15Z" /></svg>` },
+                    { id: 'merge-image', title: 'Merge Images', desc: 'Stitch multiple images together, side-by-side or vertically.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M4,4V11H11V4H4M4,13V20H11V13H4M13,4V20H20V4H13Z" /></svg>` },
+                    { id: 'passport-photo', title: 'Passport Photo Maker', desc: 'Crop photos with a visual guide for perfect alignment.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M2,3H8V5H9V6H15V5H16V3H22V9H20V10H19V14H20V15H22V21H16V19H15V18H9V19H8V21H2V15H4V14H5V10H4V9H2V3M12,7A2.5,2.5 0 0,1 14.5,9.5A2.5,2.5 0 0,1 12,12A2.5,2.5 0 0,1 9.5,9.5A2.5,2.5 0 0,1 12,7M7,14H17C17,12 14.33,13.09 12,13.09C9.67,13.09 7,12 7,14Z" /></svg>` },
+                    { id: 'add-watermark', title: 'Add Watermark', desc: 'Apply single or tiled text watermarks to images.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M21,3H3C1.9,3 1,3.9 1,5V19C1,20.1 1.9,21 3,21H21C22.1,21 23,20.1 23,19V5C23,3.9 22.1,3 21,3M21,19H3V5H21V19M11.2,12.03L13.1,14.6L15.93,11L20,16.07H5.03L8.53,11.53L11.2,12.03M6.5,14.03V16.03H18.5V15.23L16,11.93L13.07,15.53L10.5,12.03L6.5,17.03" /></svg>`},
+                    { id: 'audio-trimmer', title: 'Audio Trimmer', desc: 'Precisely cut audio with a visual waveform editor.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,13.84 19.3,15.54 18.15,16.85L5.15,3.85C6.46,2.7 8.16,2 10,2M4,12A8,8 0 0,1 10,4.26V19.74A8,8 0 0,1 4,12Z" /></svg>` },
+                ],
+                "Content & Text Tools": [
+                    { id: 'word-counter', title: 'Word Counter', desc: 'Pro text analysis: word count, reading time & keywords.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M10,4A4,4 0 0,1 14,8C14,9.95 12.28,11.5 10.5,11.5C10.33,11.5 10.17,11.5 10,11.5C9.83,11.5 9.67,11.5 9.5,11.5C7.72,11.5 6,9.95 6,8A4,4 0 0,1 10,4M10,6A2,2 0 0,0 8,8C8,9.05 8.95,10 10,10C11.05,10 12,9.05 12,8A2,2 0 0,0 10,6M5.5,12.25C4.25,12.25 2.13,12.81 2.13,14V16H12.88C12.44,15.19 12.13,14.22 12,13.2C10.43,13.62 8.44,14 7,14C6.5,14 6,13.83 5.5,13.59V12.25M10,13C10.33,13 10.66,13 11,13.05V20H2V17.5C2,15.31 5.67,14 7,14C7.33,14 8,14.07 8.5,14.17C9.07,13.56 9.5,13.28 10,13M12.5,14.5L14.46,18.41L18.41,16.46L16.46,12.5L12.5,14.5M21.18,17.25L19.23,17.7L18.78,19.65L16.95,19.17L16.5,21.05L14.54,20.57L14.07,22.4L12.24,21.93L11.77,23.76L9.95,23.28L10.43,21.41L8.59,20.93L9.07,19.09L7.24,18.61L7.72,16.78L5.89,16.3L6.37,14.47L4.54,14L5,12.12L9.43,13.25L12.5,14.5L16.46,12.5L21.18,17.25Z" /></svg>` },
+                    { id: 'json-formatter', title: 'JSON Formatter', desc: 'Validate, format, and copy your JSON with line numbers.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M12,3A3,3 0 0,1 15,6H9A3,3 0 0,1 12,3M19,9H17V6C17,5.19 16.62,4.47 16,4H15V6H9V4H8C7.38,4.47 7,5.19 7,6V9H5C3.89,9 3,9.89 3,11V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V11C21,9.89 20.11,9 19,9M8,13H10V18H8V13M14,13H16V18H14V13Z" /></svg>`},
+                    { id: 'text-to-speech', title: 'Text to Speech', desc: 'Convert text to audio with pause and resume controls.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M13,2A3,3 0 0,1 16,5V15A3,3 0 0,1 13,18H12L10,20H8V15A3,3 0 0,1 11,12H13V5A1,1 0 0,0 12,4H11A1,1 0 0,0 10,5V7H8V5A3,3 0 0,1 11,2H13M19.3,10.6L18.3,11.6C19.1,12.4 19.1,13.8 18.3,14.6L19.3,15.6C20.5,14.4 20.5,11.8 19.3,10.6M16.5,12.4L15.5,13.4C15.7,13.6 15.7,14 15.5,14.2L16.5,15.2C17.3,14.4 17.3,13.2 16.5,12.4Z" /></svg>`},
+                    { id: 'speech-to-text', title: 'Speech to Text', desc: 'Transcribe your spoken words and copy the result.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`},
+                ],
+                "Utility Tools": [
+                     { id: 'age-calculator', title: 'Age Calculator', desc: 'Calculate your precise age down to the second.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M7,10H17V12H7V10M7,14H17V16H7V14M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z" /></svg>` },
+                    { id: 'bmi-calculator', title: 'BMI Calculator', desc: 'Calculate your BMI and see it on a visual scale.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M16.5,6.5L18,8L19.5,6.5L21,8V10H23V8L21,6L19.5,7.5L18,6L16.5,7.5V5H14V11H16V7.5L16.5,6.5M6,12L2,22L4.5,20.5L6,16L7.5,20.5L10,22L6,12M7.5,8A2.5,2.5 0 0,1 10,10.5A2.5,2.5 0 0,1 7.5,13A2.5,2.5 0 0,1 5,10.5A2.5,2.5 0 0,1 7.5,8Z" /></svg>`},
+                    { id: 'color-picker', title: 'Color Picker', desc: 'Pick colors and check their WCAG contrast ratio.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A9,9 0 0,0 21,12A9,9 0 0,0 12,3Z" /></svg>`},
+                    { id: 'unit-converter', title: 'Unit Converter', desc: 'Convert Length, Mass, Temperature, Volume, and Speed.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M9,3L5,7H8V13H10V7H13M16,17V21L12,17H15V11H17V17M5.41,20L4,18.59L18.59,4L20,5.41" /></svg>`},
+                    { id: 'password-generator', title: 'Password Generator', desc: 'Generate strong, readable passwords with strength indicator.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M12,17A2,2 0 0,0 14,15A2,2 0 0,0 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z" /></svg>` },
+                    { id: 'qr-generator', title: 'QR Code Generator', desc: 'Create custom QR codes with an embedded logo.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M4 4h6v6H4V4m1 1v4h4V5H5m2 7H4v3h3v-3M6 15v1H5v-1h1m7-9h6v6h-6V4m1 1v4h4V5h-4m2 7h-3v3h3v-3m1 2h-1v-1h1v1M18 18h3v3h-3v-3m1 2h1v-1h-1v1M4 18h3v3H4v-3m1 2h1v-1H5v1Z" /></svg>` },
+                    { id: 'timer-stopwatch', title: 'Timer / Stopwatch', desc: 'A handy tool for timing events and tracking laps.', icon: `<svg viewBox="0 0 24 24"><path fill="url(#iconGrad)" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" /></svg>`},
+                ]
+            };
+            const allTools = Object.values(toolSections).flat();
+
+            const populateTools = () => {
+                ui.toolsGrid.innerHTML = allTools.map(tool => `<div class="tool-card" data-tool="${tool.id}"><h3>${tool.icon}<span>${tool.title}</span></h3><p>${tool.desc}</p><button class="tool-button">Open Tool</button></div>`).join('');
+                ui.sidebarContent.innerHTML = Object.entries(toolSections).map(([sectionTitle, tools]) => `<section class="tool-section"><h3>${sectionTitle}</h3><ul>${tools.map(tool => `<li><a href="#" class="tool-link" data-tool="${tool.id}">${tool.icon}<span>${tool.title}</span></a></li>`).join('')}</ul></section>`).join('');
+                document.querySelectorAll('[data-tool]').forEach(el => el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const toolId = el.dataset.tool;
+                    const tool = allTools.find(t => t.id === toolId) || { title: toolId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) };
+                    openModal(toolId, tool.title);
+                }));
+            };
+            
+            let currentIntervalId = null; 
+            const closeModal = () => {
+                document.body.classList.remove('modal-open');
+                if (currentIntervalId) { clearInterval(currentIntervalId); currentIntervalId = null; }
+            };
+            ui.modalClose.addEventListener('click', closeModal);
+            ui.modalOverlay.addEventListener('click', e => (e.target === ui.modalOverlay) && closeModal());
+            
+            const openModal = (toolId, title) => { 
+                ui.modalTitle.textContent = title; 
+                ui.modalBody.innerHTML = generateToolUI(toolId); 
+                document.body.classList.add('modal-open'); 
+                attachToolEventListeners(toolId); 
+            };
+            
+            const showToast = (message, duration = 3000) => { ui.toast.textContent = message; ui.toast.classList.add('show'); setTimeout(() => ui.toast.classList.remove('show'), duration); };
+            const downloadBlob = (blob, filename) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast(`Download started: ${filename}`); };
+            const setButtonState = (button, text, disabled) => { if (button) { button.textContent = text; button.disabled = disabled; } };
+            
+            const fileInputUI = (id, label, multiple = false, accept = '') => `<div class="form-group"><label for="${id}" class="file-input-label">${label}</label><input type="file" id="${id}" ${multiple ? 'multiple' : ''} ${accept ? `accept="${accept}"` : ''}></div><div id="file-list-display">No file selected.</div>`;
+            const staticPageUI = (content) => `<div class="page-content">${content}</div>`;
+
+            const generateToolUI = (toolId) => {
+                switch (toolId) {
+                    // --- Upgraded Tools ---
+                    case 'qr-generator': return `<p class="tool-description">Create custom QR codes with live preview and advanced options.</p><div class="form-group"><label for="qr-text">Text or URL</label><input type="text" id="qr-text" placeholder="https://krx.tools"></div><div class="tool-options"><div class="form-group"><label for="qr-color-dark">Dot Color</label><input type="color" id="qr-color-dark" value="#0D0D2B"></div><div class="form-group"><label for="qr-color-light">Background Color</label><input type="color" id="qr-color-light" value="#FFFFFF"></div><div class="form-group"><label for="qr-error-level">Error Correction</label><select id="qr-error-level"><option value="L">Low (L)</option><option value="M" selected>Medium (M)</option><option value="Q">Quartile (Q)</option><option value="H">High (H)</option></select></div><div class="form-group"><label for="qr-logo-margin">Logo Margin Size</label><input type="range" id="qr-logo-margin" min="0" max="15" value="5" step="1"></div></div>${fileInputUI('qr-logo-input', 'Upload Logo (Optional)', false, 'image/*')}<div id="qr-code-result" style="background:white; padding:10px; border-radius:5px; width:fit-content; margin: 1rem auto; min-height: 220px;"></div><button id="download-qr-btn" class="cta-button secondary" style="margin: 1rem auto; display: none;">Download PNG</button>`;
+                    case 'color-picker': return `<p class="tool-description">An advanced color tool with live converters and a WCAG contrast checker.</p><div class="color-picker-layout"><div class="color-input-wrapper"><label for="color-picker-input-main">Color</label><input type="color" id="color-picker-input-main" value="#A259FF" class="color-preview-box"></div><div class="color-values-grid"><div class="color-value-group"><label>HEX</label><input type="text" id="hex-value" readonly><button class="copy-btn" data-copy-target="hex-value">📋</button></div><div class="color-value-group"><label>RGB</label><input type="text" id="rgb-value" readonly><button class="copy-btn" data-copy-target="rgb-value">📋</button></div><div class="color-value-group"><label>HSL</label><input type="text" id="hsl-value" readonly><button class="copy-btn" data-copy-target="hsl-value">📋</button></div><div class="color-value-group"><label>CMYK</label><input type="text" id="cmyk-value" readonly><button class="copy-btn" data-copy-target="cmyk-value">📋</button></div></div></div><div class="tool-options" style="margin-top: 2rem;"><h4>Live WCAG Contrast Checker</h4><div class="contrast-checker-grid"><div><p>Text Color</p><div class="color-input-wrapper"><input type="color" id="contrast-color-fg" value="#A259FF" class="color-preview-box"></div></div><div><p>Ratio</p><div id="contrast-ratio-display">1.00</div><div id="contrast-status"></div></div><div><p>Background Color</p><div class="color-input-wrapper"><input type="color" id="contrast-color-bg" value="#0D0D2B" class="color-preview-box"></div></div></div></div>`;
+                    case 'passport-photo': return `<p class="tool-description">Crop a photo with a detailed guide and live preview.</p>${fileInputUI('file-input', 'Select Photo', false, 'image/*')}<div class="passport-layout" style="display:none;"><div class="cropper-container" id="cropper-container" style="max-height: 400px;"><img id="cropper-image" style="max-width:100%;"><svg id="cropper-guide-svg" viewBox="0 0 350 450"><rect x="1" y="1" width="348" height="448" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-dasharray="10 5"/><line x1="0" y1="50" x2="350" y2="50" stroke="rgba(0,255,255,0.6)" stroke-width="2"/><text x="5" y="45" fill="cyan" font-size="14">Top of Head</text><line x1="0" y1="240" x2="350" y2="240" stroke="rgba(0,255,255,0.6)" stroke-width="2"/><text x="5" y="235" fill="cyan" font-size="14">Chin Line</text></svg></div><div><h4>Live Preview</h4><canvas id="passport-live-preview" width="175" height="225"></canvas></div></div><div id="passport-options" style="display:none;" class="tool-options"><div class="form-group"><label for="paper-size">Paper Size</label><select id="paper-size"><option value="4x6">4x6 inch</option><option value="a4">A4</option></select></div><div class="form-group"><label for="photo-count">Photos per Sheet</label><select id="photo-count"><option value="8" selected>8 (on 4x6)</option><option value="6">6</option><option value="4">4</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" style="display:none;">Generate Sheet</button>`;
+                    case 'audio-trimmer': return `<p class="tool-description">Precisely cut audio with a visual waveform editor and playback controls.</p>${fileInputUI('file-input', 'Select Audio', false, 'audio/*')}<div id="waveform" style="margin-top:1rem;"></div><div id="audio-controls" style="display:none;"><button id="play-pause-btn" class="cta-button primary">Play</button><button id="play-selection-btn" class="cta-button secondary">Play Selection</button><span id="audio-time">00:00 / 00:00</span></div><div id="trim-options" style="display:none;" class="tool-options"><div class="form-group"><label for="start-time">Start Time (s)</label><input type="number" id="start-time" value="0" step="0.1" min="0"></div><div class="form-group"><label for="end-time">End Time (s)</label><input type="number" id="end-time" value="0" step="0.1" min="0"></div></div><button id="process-btn" class="cta-button primary processing-btn" style="display:none;">Trim Audio</button>`;
+
+                    // --- Unchanged Tools ---
+                    case 'merge-pdf': return `<p class="tool-description">Select multiple PDF files, drag to reorder, then merge.</p>${fileInputUI('file-input', 'Select PDFs', true, '.pdf')}<ul id="pdf-file-list" class="draggable-list"></ul><button id="process-btn" class="cta-button primary processing-btn" disabled>Merge PDFs</button>`;
+                    case 'split-pdf': return `<p class="tool-description">Extract a specific range, or split every page into a separate file.</p>${fileInputUI('file-input', 'Select PDF', false, '.pdf')}<div class="tool-options"><div class="form-group"><label for="page-range">Page Ranges (e.g., 1-3, 5)</label><input type="text" id="page-range" placeholder="e.g., 1-3, 5, 8-10"></div></div><div class="button-group"><button id="process-btn" class="cta-button primary" disabled>Split Range</button><button id="split-all-btn" class="cta-button secondary" disabled>Extract All Pages</button></div>`;
+                    case 'compress-pdf': return `<p class="tool-description">Reduce file size and see the results.</p>${fileInputUI('file-input', 'Select PDF', false, '.pdf')}<div class="tool-options"><div class="form-group"><label for="compress-quality">Compression Quality</label><select id="compress-quality"><option value="1.0">Low (Fastest)</option><option value="1.5" selected>Medium</option><option value="2.0">High (Best)</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" disabled>Compress PDF</button><div id="compression-result" class="result-box" style="display:none;"></div>`;
+                    case 'pdf-to-jpg': return `<p class="tool-description">Convert PDF pages to your chosen image format.</p>${fileInputUI('file-input', 'Select PDF', false, '.pdf')}<div class="tool-options"><div class="form-group"><label for="image-format">Output Format</label><select id="image-format"><option value="jpeg" selected>JPG</option><option value="png">PNG</option><option value="webp">WEBP</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" disabled>Convert to Images</button>`;
+                    case 'pdf-to-text': return `<p class="tool-description">Extract all text content from a PDF document.</p>${fileInputUI('file-input', 'Select PDF', false, '.pdf')}<button id="process-btn" class="cta-button primary processing-btn" disabled>Extract Text</button><div id="text-result-container" style="display:none;"><div class="form-group" style="margin-top:1rem; position: relative;"><label>Extracted Text</label><textarea id="extracted-text" rows="10" readonly></textarea><button id="copy-text-btn" class="copy-btn" style="position:absolute; top: 40px; right:10px;">📋</button></div><button id="download-txt-btn" class="cta-button secondary">Download as .txt</button></div>`;
+                    case 'jpg-to-pdf': return `<p class="tool-description">Combine images into a PDF with custom page settings.</p>${fileInputUI('file-input', 'Select Images', true, 'image/jpeg,image/png,image/webp')}<ul id="image-file-list" class="draggable-list"></ul><div class="tool-options"><div class="form-group"><label for="page-size">Page Size</label><select id="page-size"><option value="A4" selected>A4</option><option value="Letter">US Letter</option></select></div><div class="form-group"><label for="orientation">Orientation</label><select id="orientation"><option value="portrait" selected>Portrait</option><option value="landscape">Landscape</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" disabled>Create PDF</button>`;
+                    case 'video-converter': return `<p class="tool-description">Convert video files entirely in your browser. Larger files may take time.</p>${fileInputUI('file-input', 'Select Video', false, 'video/*')}<div class="tool-options"><div class="form-group"><label for="output-format">Output Format</label><select id="output-format"><option value="mp4">MP4</option><option value="mkv">MKV</option><option value="avi">AVI</option><option value="mov">MOV</option><option value="gif">Animated GIF</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" disabled>Convert Video</button><div id="ffmpeg-log"></div>`;
+                    case 'merge-image': return `<p class="tool-description">Stitch multiple images together.</p>${fileInputUI('file-input', 'Select Images', true, 'image/*')}<ul id="image-file-list" class="draggable-list"></ul><div class="tool-options"><div class="form-group"><label for="merge-direction">Direction</label><select id="merge-direction"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" disabled>Merge Images</button>`;
+                    case 'add-watermark': return `<p class="tool-description">Apply single or tiled watermarks to your image.</p>${fileInputUI('file-input', 'Select Image', false, 'image/*')}<div class="tool-options" id="watermark-options" style="display:none;"><div class="form-group"><label for="watermark-text">Watermark Text</label><input type="text" id="watermark-text" value="KRX Tools"></div><div class="form-group"><label for="watermark-font">Font</label><select id="watermark-font"><option value="Orbitron">Orbitron</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option></select></div><div class="form-group"><label for="watermark-size">Font Size</label><input type="number" id="watermark-size" value="48"></div><div class="form-group"><label for="watermark-color">Color</label><input type="color" id="watermark-color" value="#ffffff"></div><div class="form-group"><label for="watermark-opacity">Opacity</label><input type="range" id="watermark-opacity" min="0" max="1" step="0.1" value="0.5"></div><div class="form-group"><label for="watermark-mode">Mode</label><select id="watermark-mode"><option value="single">Single</option><option value="tile">Tile/Repeat</option></select></div></div><button id="process-btn" class="cta-button primary processing-btn" style="display:none;">Add Watermark & Download</button>`;
+                    case 'word-counter': return `<p class="tool-description">Get a professional analysis of your text in real-time.</p><div class="form-group" style="position:relative;"><textarea id="text-input" rows="8" placeholder="Start typing..."></textarea><button id="copy-text-btn" class="copy-btn" style="position:absolute; top: 5px; right:5px;">📋</button></div><div class="result-box" id="word-count-result" style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;"></div><div class="result-box" style="margin-top: 1rem;"><h4>Keyword Density</h4><ul id="keyword-list"><li>-</li></ul></div>`;
+                    case 'json-formatter': return `<p class="tool-description">Paste and beautify your JSON data.</p><div class="form-group"><div id="json-editor" style="position:relative; height: 300px; border: 1px solid var(--accent-purple); border-radius: 5px;"><textarea id="json-input" style="height:100%; border:none; resize:none; padding-left: 50px;" placeholder='{"key":"value"}'></textarea><div id="line-numbers" style="position:absolute; top:0; left:0; height:100%; padding:10px; background-color: var(--glow-purple); color:var(--text-gray); text-align:right; user-select:none;">1</div></div></div><div class="button-group"><button id="format-json-btn" class="cta-button primary">Format</button><button id="copy-json-btn" class="cta-button secondary">Copy</button></div>`;
+                    case 'text-to-speech': return `<p class="tool-description">Convert text to audio with advanced controls.</p><div class="form-group"><textarea id="tts-text" rows="6">Hello, world! Welcome to KRX Tools.</textarea></div><div class="tool-options"><div class="form-group"><label for="tts-voice">Voice</label><select id="tts-voice"></select></div><div class="form-group"><label for="tts-rate">Rate</label><input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1"></div><div class="form-group"><label for="tts-pitch">Pitch</label><input type="range" id="tts-pitch" min="0" max="2" step="0.1" value="1"></div></div><div class="button-group"><button id="speak-btn" class="cta-button primary">Speak</button><button id="pause-btn" class="cta-button secondary">Pause</button><button id="resume-btn" class="cta-button secondary">Resume</button></div>`;
+                    case 'speech-to-text': return `<p class="tool-description">Transcribe your spoken words and copy the result.</p><div class="form-group"><textarea id="stt-output" rows="8" placeholder="Speech output will appear here..."></textarea></div><div class="button-group"><button id="stt-btn" class="cta-button primary">Start Listening</button><button id="copy-stt-btn" class="cta-button secondary">Copy</button></div>`;
+                    case 'age-calculator': return `<div class="form-group"><label for="birthdate">Enter Your Date of Birth</label><input type="date" id="birthdate"></div><button class="cta-button primary processing-btn" id="calculate-age-btn">Calculate Age</button><div class="result-box" id="age-result">Select your birth date and click calculate.</div>`;
+                    case 'bmi-calculator': return `<p class="tool-description">Calculate your BMI and see it on a visual scale.</p><div class="form-group"><label>Units</label><select id="bmi-units"><option value="metric">Metric (kg, cm)</option><option value="imperial">Imperial (lbs, in)</option></select></div><div class="tool-options"><div class="form-group"><label for="bmi-height">Height (cm)</label><input type="number" id="bmi-height"></div><div class="form-group"><label for="bmi-weight">Weight (kg)</label><input type="number" id="bmi-weight"></div></div><button class="cta-button primary processing-btn" id="calculate-bmi-btn">Calculate BMI</button><div id="bmi-result-bar" style="width:100%; height: 20px; background: linear-gradient(to right, #3498db, #2ecc71, #f1c40f, #e74c3c); border-radius: 10px; margin-top:1rem; position:relative; display:none;"><div id="bmi-indicator" style="position:absolute; top:-5px; width:4px; height:30px; background:white; border-radius:2px; transform: translateX(-2px); transition: left 0.5s;"></div></div><div class="result-box" id="bmi-result" style="text-align:center;"></div>`;
+                    case 'unit-converter': return `<p class="tool-description">Convert between various units of measurement.</p><div class="form-group"><label for="unit-category">Category</label><select id="unit-category"><option value="length">Length</option><option value="mass">Mass</option><option value="temperature">Temperature</option><option value="volume">Volume</option><option value="speed">Speed</option></select></div><div class="tool-options" id="unit-fields" style="align-items: center;"><div class="form-group"><label>From</label><div style="display:flex; gap: 0.5rem;"><input type="number" id="from-unit-value" value="1" style="flex:2;"><select id="from-unit-select" style="flex:1;"></select></div></div><div style="font-size: 2rem; color: var(--bright-blue); padding-bottom: 1rem;">⇄</div><div class="form-group"><label>To</label><div style="display:flex; gap: 0.5rem;"><input type="number" id="to-unit-value" readonly style="flex:2; background: var(--sidebar-bg);"><select id="to-unit-select" style="flex:1;"></select></div></div></div>`;
+                    case 'password-generator': return `<p class="tool-description">Generate strong, readable passwords with advanced options.</p><div class="tool-options"><div class="form-group"><label for="length">Password Length</label><input type="number" id="length" value="16" min="4" max="128"></div><div class="form-group" style="grid-column: span 2;"><label><input type="checkbox" id="uppercase" checked> Uppercase</label><label><input type="checkbox" id="lowercase" checked> Lowercase</label><label><input type="checkbox" id="numbers" checked> Numbers</label><label><input type="checkbox" id="symbols" checked> Symbols</label><br><label><input type="checkbox" id="exclude-similar"> Exclude Similar (I,l,1,O,0)</label></div></div><button class="cta-button primary processing-btn" id="generate-pass-btn">Generate</button><div class="password-result-container" style="display:flex; align-items:center; gap:1rem;"><div id="password-result" class="result-box" style="flex-grow:1;margin:0;">Click Generate...</div><button id="copy-pass-btn" class="copy-btn">📋</button></div><div style="width:100%; height:5px; background:var(--glow-purple); border-radius:5px; margin-top:0.5rem;"><div id="strength-bar-inner" style="height:100%; width:0; border-radius:5px; transition: all 0.3s;"></div></div>`;
+                    case 'timer-stopwatch': return `<p class="tool-description">A simple timer and stopwatch tool with lap functionality.</p><div class="form-group"><label>Mode</label><select id="timer-mode"><option value="stopwatch">Stopwatch</option><option value="timer">Timer</option></select></div><div id="timer-inputs" style="display:none;" class="tool-options"><div class="form-group"><label>Minutes</label><input type="number" id="timer-minutes" value="5" min="0"></div><div class="form-group"><label>Seconds</label><input type="number" id="timer-seconds" value="0" min="0" max="59"></div></div><div class="result-box" id="timer-display" style="font-size: 3rem; text-align:center; letter-spacing: 4px;">00:00.000</div><div class="button-group" id="timer-controls"><button id="timer-start" class="cta-button primary">Start</button><button id="timer-stop" class="cta-button secondary">Stop</button><button id="timer-reset" class="cta-button secondary">Reset</button><button id="timer-lap" class="cta-button secondary">Lap</button></div><div id="laps-container" class="result-box" style="display:none;"><h4>Laps</h4></div>`;
+                    default: return staticPageUI('<h3>About KRX Tool Hub</h3><p>KRX is a futuristic, all-in-one web application designed to provide a comprehensive suite of tools for everyday digital tasks. Our mission is to offer powerful, client-side utilities that respect your privacy by processing all data directly in your browser. Nothing is ever uploaded to our servers.</p>');
+                }
+            };
+
+            const updateFileNameDisplay = (fileInput) => {
+                const displayDiv = document.getElementById('file-list-display');
+                const fileInputLabel = document.querySelector(`label[for="${fileInput.id}"]`);
+                if (!displayDiv) return;
+
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    displayDiv.innerHTML = 'No file selected.';
+                    fileInputLabel.classList.remove('active');
+                    return;
+                }
+                
+                fileInputLabel.classList.add('active');
+                let fileNamesHTML = Array.from(fileInput.files)
+                    .map(file => `<p>${file.name} (${(file.size / 1024).toFixed(2)} KB)</p>`)
+                    .join('');
+                displayDiv.innerHTML = fileNamesHTML;
+            };
+            
+            // --- ATTACH TOOL EVENT LISTENERS (COMPLETE & FIXED) ---
+            const attachToolEventListeners = (toolId) => {
+                const processBtn = document.getElementById('process-btn');
+                const handleAsyncClick = async (button, actionText, actionFn) => {
+                    const originalText = button.textContent;
+                    setButtonState(button, actionText, true);
+                    try {
+                        await actionFn();
+                    } catch (e) {
+                        showToast(`Error: ${e.message}`);
+                        console.error(e);
+                    } finally {
+                        setButtonState(button, originalText, false);
+                    }
+                };
+
+                const fileInput = document.getElementById('file-input') || document.getElementById('qr-logo-input');
+                if (fileInput) { 
+                    fileInput.addEventListener('change', () => { 
+                        if (processBtn && !processBtn.dataset.noenable) processBtn.disabled = fileInput.files.length === 0; 
+                        updateFileNameDisplay(fileInput);
+                        fileInput.dispatchEvent(new Event('change_custom', { bubbles: true })); 
+                    }); 
+                }
+                
+                switch (toolId) {
+                    // --- UPGRADED TOOLS ---
+                    case 'qr-generator': {
+                        const qrText = document.getElementById('qr-text');
+                        const qrResult = document.getElementById('qr-code-result');
+                        const downloadBtn = document.getElementById('download-qr-btn');
+                        const colorDark = document.getElementById('qr-color-dark');
+                        const colorLight = document.getElementById('qr-color-light');
+                        const errorLevelSelect = document.getElementById('qr-error-level');
+                        const logoMarginSlider = document.getElementById('qr-logo-margin');
+                        const logoInput = document.getElementById('qr-logo-input');
+                        let logoImage;
+                        let qrInstance;
+
+                        logoInput.addEventListener('change_custom', (e) => { 
+                             if(logoInput.files && logoInput.files[0]){ 
+                                 const reader = new FileReader(); 
+                                 reader.onload = (event) => { logoImage = new Image(); logoImage.onload = generate; logoImage.src = event.target.result; }; 
+                                 reader.readAsDataURL(logoInput.files[0]);
+                             } else { 
+                                 logoImage = null; 
+                                 generate(); 
+                             }
+                        });
+
+                        const generate = () => {
+                            qrResult.innerHTML = '';
+                            if (!qrText.value.trim()) { 
+                                downloadBtn.style.display = 'none'; 
+                                return; 
+                            }
+                            
+                            const errorCorrectionLevel = { 'L': QRCode.CorrectLevel.L, 'M': QRCode.CorrectLevel.M, 'Q': QRCode.CorrectLevel.Q, 'H': QRCode.CorrectLevel.H };
+                            qrInstance = new QRCode(qrResult, { 
+                                text: qrText.value, 
+                                width: 200, height: 200, 
+                                colorDark: colorDark.value, 
+                                colorLight: colorLight.value, 
+                                correctLevel: errorCorrectionLevel[errorLevelSelect.value]
+                            });
+
+                            qrResult.style.backgroundColor = colorLight.value;
+                            downloadBtn.style.display = 'block';
+
+                            if (logoImage && logoImage.src) { 
+                                setTimeout(() => { 
+                                    const canvas = qrResult.querySelector('canvas'); 
+                                    if(!canvas) return; 
+                                    const ctx = canvas.getContext('2d'); 
+                                    const logoSize = canvas.width * 0.25; 
+                                    const margin = parseInt(logoMarginSlider.value);
+                                    const x = (canvas.width - logoSize) / 2; 
+                                    const y = (canvas.height - logoSize) / 2; 
+                                    ctx.fillStyle = colorLight.value; 
+                                    ctx.fillRect(x - margin, y - margin, logoSize + (margin * 2), logoSize + (margin * 2)); 
+                                    ctx.drawImage(logoImage, x, y, logoSize, logoSize); 
+                                }, 100); 
+                            }
+                        };
+                        
+                        [qrText, colorDark, colorLight, errorLevelSelect, logoMarginSlider].forEach(el => el.addEventListener('input', generate));
+                        downloadBtn.addEventListener('click', () => {
+                            const canvas = qrResult.querySelector('canvas');
+                            if(canvas) canvas.toBlob(blob => downloadBlob(blob, 'krx_qrcode.png'));
+                        });
+                        generate(); // Initial call
+                        break;
+                    }
+                    case 'color-picker': {
+                        const mainPicker = document.getElementById('color-picker-input-main');
+                        const hexInput = document.getElementById('hex-value');
+                        const rgbInput = document.getElementById('rgb-value');
+                        const hslInput = document.getElementById('hsl-value');
+                        const cmykInput = document.getElementById('cmyk-value');
+                        
+                        const contrastFgPicker = document.getElementById('contrast-color-fg');
+                        const contrastBgPicker = document.getElementById('contrast-color-bg');
+                        const ratioDisplay = document.getElementById('contrast-ratio-display');
+                        const statusDisplay = document.getElementById('contrast-status');
+
+                        const hexToRgb = (hex) => { let r=0,g=0,b=0; if(hex.length==4){r="0x"+hex[1]+hex[1];g="0x"+hex[2]+hex[2];b="0x"+hex[3]+hex[3];}else if(hex.length==7){r="0x"+hex[1]+hex[2];g="0x"+hex[3]+hex[4];b="0x"+hex[5]+hex[6];} return[+r,+g,+b]; };
+                        const rgbToHsl = (r, g, b) => { r/=255;g/=255;b/=255; let max=Math.max(r,g,b),min=Math.min(r,g,b); let h,s,l=(max+min)/2; if(max==min){h=s=0;}else{let d=max-min;s=l>0.5?d/(2-max-min):d/(max+min); switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;} h/=6;} return[Math.round(h*360),Math.round(s*100),Math.round(l*100)]; };
+                        const rgbToCmyk = (r, g, b) => { let c=1-(r/255),m=1-(g/255),y=1-(b/255),k=Math.min(c,m,y); c=(c-k)/(1-k)||0;m=(m-k)/(1-k)||0;y=(y-k)/(1-k)||0; return[Math.round(c*100),Math.round(m*100),Math.round(y*100),Math.round(k*100)]; };
+                        
+                        const updateValues = (hex) => {
+                            const [r,g,b] = hexToRgb(hex);
+                            const [h,s,l] = rgbToHsl(r,g,b);
+                            const [c,m,y,k] = rgbToCmyk(r,g,b);
+                            hexInput.value = hex.toUpperCase();
+                            rgbInput.value = `rgb(${r}, ${g}, ${b})`;
+                            hslInput.value = `hsl(${h}, ${s}%, ${l}%)`;
+                            cmykInput.value = `cmyk(${c}%, ${m}%, ${y}%, ${k}%)`;
+                        };
+                        
+                        const getLuminance = (r,g,b) => { let a=[r,g,b].map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});return a[0]*0.2126+a[1]*0.7152+a[2]*0.0722; };
+                        const getContrast = (rgb1,rgb2) => { const l1=getLuminance(rgb1[0],rgb1[1],rgb1[2]); const l2=getLuminance(rgb2[0],rgb2[1],rgb2[2]); return l1>l2?(l1+0.05)/(l2+0.05):(l2+0.05)/(l1+0.05); };
+
+                        const updateContrast = () => {
+                            const fgRgb = hexToRgb(contrastFgPicker.value);
+                            const bgRgb = hexToRgb(contrastBgPicker.value);
+                            const ratio = getContrast(fgRgb, bgRgb);
+                            ratioDisplay.textContent = ratio.toFixed(2);
+                            let statusHTML = '<div>Normal Text (AA): ' + (ratio >= 4.5 ? '<span class="pass">PASS</span>' : '<span class="fail">FAIL</span>') + '</div>';
+                            statusHTML += '<div>Large Text (AA): ' + (ratio >= 3 ? '<span class="pass">PASS</span>' : '<span class="fail">FAIL</span>') + '</div>';
+                            statusHTML += '<div>Normal Text (AAA): ' + (ratio >= 7 ? '<span class="pass">PASS</span>' : '<span class="fail">FAIL</span>') + '</div>';
+                            statusHTML += '<div>Large Text (AAA): ' + (ratio >= 4.5 ? '<span class="pass">PASS</span>' : '<span class="fail">FAIL</span>') + '</div>';
+                            statusDisplay.innerHTML = statusHTML;
+                        };
+
+                        mainPicker.addEventListener('input', (e) => updateValues(e.target.value));
+                        [contrastFgPicker, contrastBgPicker].forEach(p => p.addEventListener('input', updateContrast));
+                        document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const targetId = btn.dataset.copyTarget;
+                                const inputToCopy = document.getElementById(targetId);
+                                navigator.clipboard.writeText(inputToCopy.value).then(() => showToast(`${targetId.toUpperCase()} value copied!`));
+                            });
+                        });
+                        
+                        updateValues(mainPicker.value);
+                        updateContrast();
+                        break;
+                    }
+                    case 'passport-photo': {
+                        let cropper;
+                        const layout = document.querySelector('.passport-layout');
+                        const livePreviewCanvas = document.getElementById('passport-live-preview');
+                        const livePreviewCtx = livePreviewCanvas.getContext('2d');
+
+                        fileInput.addEventListener('change_custom', () => {
+                            if (fileInput.files && fileInput.files[0]) {
+                                const reader = new FileReader();
+                                reader.onload = e => {
+                                    layout.style.display = 'grid';
+                                    const imgElement = document.getElementById('cropper-image');
+                                    imgElement.src = e.target.result;
+                                    if (cropper) cropper.destroy();
+                                    cropper = new Cropper(imgElement, {
+                                        aspectRatio: 35 / 45, viewMode: 1, autoCropArea: 0.9, background: false,
+                                        crop: () => {
+                                            const croppedCanvas = cropper.getCroppedCanvas({width: 175, height: 225});
+                                            livePreviewCtx.clearRect(0, 0, 175, 225);
+                                            livePreviewCtx.drawImage(croppedCanvas, 0, 0, 175, 225);
+                                        }
+                                    });
+                                    document.getElementById('passport-options').style.display = 'grid';
+                                    processBtn.style.display = 'block';
+                                };
+                                reader.readAsDataURL(fileInput.files[0]);
+                            }
+                        });
+                        processBtn?.addEventListener('click', () => handleAsyncClick(processBtn, 'Generating...', async () => {
+                            if (!cropper) throw new Error('Please select and crop an image first.');
+                            const croppedCanvas = cropper.getCroppedCanvas({ width: 350, height: 450, imageSmoothingQuality: 'high' });
+                            const paperSize = document.getElementById('paper-size').value;
+                            const photoCount = parseInt(document.getElementById('photo-count').value);
+                            const paperDimensions = { '4x6': { width: 1200, height: 1800, cols: 2 }, 'a4': { width: 2480, height: 3508, cols: 4 } };
+                            const selectedPaper = paperDimensions[paperSize];
+                            const sheetCanvas = document.createElement('canvas'); sheetCanvas.width = selectedPaper.width; sheetCanvas.height = selectedPaper.height;
+                            const ctx = sheetCanvas.getContext('2d'); ctx.fillStyle = "white"; ctx.fillRect(0, 0, sheetCanvas.width, sheetCanvas.height);
+                            const photoW = 350, photoH = 450, gap = 30;
+                            const totalRowWidth = selectedPaper.cols * photoW + (selectedPaper.cols - 1) * gap;
+                            const startX = (sheetCanvas.width - totalRowWidth) / 2;
+                            let startY = 40;
+                            for (let i = 0; i < photoCount; i++) {
+                                const row = Math.floor(i / selectedPaper.cols); const col = i % selectedPaper.cols;
+                                const x = startX + col * (photoW + gap); const y = startY + row * (photoH + gap);
+                                if (y + photoH > sheetCanvas.height) break;
+                                ctx.drawImage(croppedCanvas, x, y, photoW, photoH);
+                            }
+                            sheetCanvas.toBlob(blob => downloadBlob(blob, `krx_passport_${paperSize}.png`), 'image/png');
+                        }));
+                        break;
+                    }
+                    case 'audio-trimmer': {
+                        let wavesurfer, region;
+                        const playPauseBtn = document.getElementById('play-pause-btn');
+                        const playSelectionBtn = document.getElementById('play-selection-btn');
+                        const timeDisplay = document.getElementById('audio-time');
+                        const formatTime = (seconds) => new Date(seconds * 1000).toISOString().slice(14, 19);
+
+                        fileInput.addEventListener('change_custom', () => {
+                            if (fileInput.files[0]) {
+                                const fileURL = URL.createObjectURL(fileInput.files[0]);
+                                if (wavesurfer) wavesurfer.destroy();
+                                wavesurfer = WaveSurfer.create({
+                                    container: '#waveform',
+                                    waveColor: '#A259FF', progressColor: '#FF2D9C',
+                                    barWidth: 3, barRadius: 3, barGap: 2
+                                });
+                                wavesurfer.load(fileURL);
+                                
+                                wavesurfer.on('ready', () => {
+                                    const duration = wavesurfer.getDuration();
+                                    document.getElementById('end-time').value = duration.toFixed(2);
+                                    timeDisplay.textContent = `00:00 / ${formatTime(duration)}`;
+                                    
+                                    wavesurfer.plugins.destroy();
+                                    region = wavesurfer.plugins.add(WaveSurfer.regions.create());
+                                    
+                                    region.addRegion({ start: 0, end: duration, color: 'rgba(0, 255, 255, 0.2)', drag: true, resize: true });
+
+                                    region.on('region-updated', (reg) => {
+                                        document.getElementById('start-time').value = reg.start.toFixed(2);
+                                        document.getElementById('end-time').value = reg.end.toFixed(2);
+                                    });
+
+                                    document.getElementById('trim-options').style.display = 'grid';
+                                    processBtn.style.display = 'block';
+                                    document.getElementById('audio-controls').style.display = 'flex';
+                                });
+                                
+                                wavesurfer.on('audioprocess', (currentTime) => { timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(wavesurfer.getDuration())}`; });
+                                wavesurfer.on('play', () => { playPauseBtn.textContent = 'Pause'; });
+                                wavesurfer.on('pause', () => { playPauseBtn.textContent = 'Play'; });
+                                wavesurfer.on('finish', () => { playPauseBtn.textContent = 'Play'; });
+                                wavesurfer.on('error', (err) => showToast(`Waveform error: ${err.message}`));
+                            }
+                        });
+                        
+                        playPauseBtn?.addEventListener('click', () => wavesurfer?.playPause());
+                        playSelectionBtn?.addEventListener('click', () => {
+                             if(wavesurfer && region.regions[0]) {
+                                 wavesurfer.play(region.regions[0].start, region.regions[0].end);
+                             }
+                        });
+
+                        processBtn?.addEventListener('click', () => handleAsyncClick(processBtn, 'Trimming...', async () => {
+                            if (!wavesurfer) throw new Error('Audio not loaded yet.');
+                            const startTime = parseFloat(document.getElementById('start-time').value);
+                            const endTime = parseFloat(document.getElementById('end-time').value);
+                            const originalBuffer = wavesurfer.getDecodedData();
+                            const sampleRate = originalBuffer.sampleRate;
+                            const startSample = Math.floor(startTime * sampleRate);
+                            const endSample = Math.floor(endTime * sampleRate);
+                            const trimmedLength = endSample - startSample;
+                            if (trimmedLength <= 0) throw new Error('End time must be after start time.');
+                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const trimmedBuffer = audio.createBuffer(originalBuffer.numberOfChannels, trimmedLength, sampleRate);
+                            for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
+                                trimmedBuffer.copyToChannel(originalBuffer.getChannelData(i).subarray(startSample, endSample), i);
+                            }
+                            const wavBlob = audioBufferToWav(trimmedBuffer);
+                            downloadBlob(wavBlob, 'krx_trimmed.wav');
+                        }));
+                        break;
+                    }
+                    // --- Fallback for unchanged tools ---
+                    default: {
+                        const originalLogic = () => {
+                            // This block contains the original, unchanged logic for all other tools
+                            // It's a self-contained function to avoid scope collision
+                            const handleAsyncClick = async (button, actionText, actionFn) => {
+                                const originalText = button.textContent;
+                                setButtonState(button, actionText, true);
+                                try { await actionFn(); } catch (e) { showToast(`Error: ${e.message}`); console.error(e); } finally { setButtonState(button, originalText, false); }
+                            };
+                            const fileInput = document.getElementById('file-input');
+                            const processBtn = document.getElementById('process-btn');
+                            switch (toolId) {
+                                case 'merge-pdf': { let pdfFiles = []; const fileList = document.getElementById('pdf-file-list'); const renderFileList = async () => { let listHTML = ''; for (const [index, file] of pdfFiles.entries()) { try { const pdfBytes = await file.arrayBuffer(); const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true }); const pageCount = pdfDoc.getPageCount(); listHTML += `<li data-index="${index}" draggable="true"><span>${file.name}</span><span style="color:var(--text-gray);">${pageCount} pages</span></li>`; } catch (e) { listHTML += `<li data-index="${index}" draggable="true" style="border-left-color: var(--accent-pink);"><span>${file.name}</span><span style="color:var(--accent-pink);">Invalid PDF</span></li>`; showToast(`Could not read ${file.name}. It might be corrupted or encrypted.`); } } fileList.innerHTML = listHTML; }; fileInput.addEventListener('change_custom', () => { document.getElementById('file-list-display').style.display='none'; pdfFiles = Array.from(fileInput.files); renderFileList(); }); let dragSrcElement = null; fileList.addEventListener('dragstart', (e) => { dragSrcElement = e.target; e.target.classList.add('dragging'); }); fileList.addEventListener('dragover', (e) => e.preventDefault()); fileList.addEventListener('drop', (e) => { e.preventDefault(); if (dragSrcElement && dragSrcElement !== e.target && e.target.closest('li')) { const target = e.target.closest('li'); const srcIndex = parseInt(dragSrcElement.dataset.index); const targetIndex = parseInt(target.dataset.index); const movedFile = pdfFiles.splice(srcIndex, 1)[0]; pdfFiles.splice(targetIndex, 0, movedFile); renderFileList(); } dragSrcElement?.classList.remove('dragging'); }); processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Merging...', async () => { const mergedPdf = await PDFDocument.create(); for (const file of pdfFiles) { const pdfBytes = await file.arrayBuffer(); const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true }); const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices()); copiedPages.forEach(page => mergedPdf.addPage(page)); } const mergedPdfBytes = await mergedPdf.save(); downloadBlob(new Blob([mergedPdfBytes], { type: 'application/pdf' }), 'krx_merged.pdf'); })); break; }
+                                case 'split-pdf': { const splitAllBtn = document.getElementById('split-all-btn'); fileInput.addEventListener('change_custom', () => { splitAllBtn.disabled = fileInput.files.length === 0; }); processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Splitting...', async () => { const rangeText = document.getElementById('page-range').value; if (!rangeText) throw new Error('Please enter page ranges.'); const pdfBytes = await fileInput.files[0].arrayBuffer(); const ranges = rangeText.split(',').flatMap(part => { const trimmedPart = part.trim(); if (trimmedPart.includes('-')) { const [start, end] = trimmedPart.split('-').map(Number); if(start > end || start < 1) return []; return Array.from({length: end - start + 1}, (_, i) => start + i - 1); } return Number(trimmedPart) > 0 ? Number(trimmedPart) - 1 : []; }); if(ranges.length === 0) throw new Error('Invalid page range specified.'); const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true }); const newPdf = await PDFDocument.create(); const copiedPages = await newPdf.copyPages(pdfDoc, ranges); copiedPages.forEach(page => newPdf.addPage(page)); const newPdfBytes = await newPdf.save(); downloadBlob(new Blob([newPdfBytes]), 'krx_split.pdf'); })); splitAllBtn.addEventListener('click', () => handleAsyncClick(splitAllBtn, 'Extracting All...', async () => { const pdfBytes = await fileInput.files[0].arrayBuffer(); const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true }); const zip = new JSZip(); for(let i=0; i<pdfDoc.getPageCount(); i++) { const newPdf = await PDFDocument.create(); const [page] = await newPdf.copyPages(pdfDoc, [i]); newPdf.addPage(page); const singlePdfBytes = await newPdf.save(); zip.file(`page_${i+1}.pdf`, singlePdfBytes); } const zipBlob = await zip.generateAsync({type:'blob'}); downloadBlob(zipBlob, 'krx_all_pages.zip'); })); break; }
+                                case 'compress-pdf': { processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Compressing...', async () => { const originalFile = fileInput.files[0]; const originalSize = originalFile.size; const pdfBytes = await originalFile.arrayBuffer(); const qualityScale = parseFloat(document.getElementById('compress-quality').value); const pdf = await pdfjsLib.getDocument({data: pdfBytes}).promise; const newPdf = await PDFDocument.create(); for (let i = 1; i <= pdf.numPages; i++) { setButtonState(processBtn, `Processing Page ${i}/${pdf.numPages}`, true); const page = await pdf.getPage(i); const viewport = page.getViewport({ scale: qualityScale }); const canvas = document.createElement('canvas'); canvas.width = viewport.width; canvas.height = viewport.height; const context = canvas.getContext('2d'); await page.render({canvasContext: context, viewport: viewport}).promise; const jpgImageBytes = await new Promise(resolve => canvas.toBlob(blob => { const reader = new FileReader(); reader.onload = () => resolve(new Uint8Array(reader.result)); reader.readAsArrayBuffer(blob); }, 'image/jpeg', 0.7)); const jpgImage = await newPdf.embedJpg(jpgImageBytes); const newPage = newPdf.addPage([viewport.width, viewport.height]); newPage.drawImage(jpgImage, { x: 0, y: 0, width: viewport.width, height: viewport.height }); } const newPdfBytes = await newPdf.save(); const newSize = newPdfBytes.byteLength; const reduction = ((originalSize - newSize) / originalSize * 100).toFixed(2); const resultBox = document.getElementById('compression-result'); resultBox.innerHTML = `Original Size: ${(originalSize / 1024 / 1024).toFixed(2)} MB<br>New Size: ${(newSize / 1024 / 1024).toFixed(2)} MB<br>Reduction: <span style="color: var(--bright-blue);">${reduction}%</span>`; resultBox.style.display = 'block'; downloadBlob(new Blob([newPdfBytes]), 'krx_compressed.pdf'); })); break; }
+                                case 'pdf-to-jpg': { processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Converting...', async () => { const pdfBytes = await fileInput.files[0].arrayBuffer(); const format = document.getElementById('image-format').value; const mimeType = `image/${format}`; const pdf = await pdfjsLib.getDocument({data: pdfBytes}).promise; const zip = new JSZip(); for (let i = 1; i <= pdf.numPages; i++) { setButtonState(processBtn, `Processing Page ${i}/${pdf.numPages}`, true); const page = await pdf.getPage(i); const viewport = page.getViewport({scale: 2.0}); const canvas = document.createElement('canvas'); canvas.width = viewport.width; canvas.height = viewport.height; const context = canvas.getContext('2d'); await page.render({canvasContext: context, viewport: viewport}).promise; const blob = await new Promise(resolve => canvas.toBlob(resolve, mimeType, 0.9)); zip.file(`page_${i}.${format}`, blob); } const zipBlob = await zip.generateAsync({type: 'blob'}); downloadBlob(zipBlob, 'krx_pdf_to_images.zip'); })); break; }
+                                case 'pdf-to-text': { processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Extracting...', async () => { const pdfBytes = await fileInput.files[0].arrayBuffer(); const pdf = await pdfjsLib.getDocument({data: pdfBytes}).promise; let fullText = ''; for(let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); const textContent = await page.getTextContent(); fullText += textContent.items.map(item => item.str).join(' ') + '\n\n'; } document.getElementById('text-result-container').style.display = 'block'; document.getElementById('extracted-text').value = fullText.trim(); })); document.getElementById('copy-text-btn')?.addEventListener('click', () => navigator.clipboard.writeText(document.getElementById('extracted-text').value).then(() => showToast('Text copied!'))); document.getElementById('download-txt-btn')?.addEventListener('click', () => downloadBlob(new Blob([document.getElementById('extracted-text').value], {type: 'text/plain'}), 'krx_extracted_text.txt')); break; }
+                                case 'jpg-to-pdf': { let imageFiles = []; const imageFileList = document.getElementById('image-file-list'); const renderImageFileList = () => { imageFileList.innerHTML = imageFiles.map((file, index) => `<li data-index="${index}" draggable="true"><span>${file.name}</span><span>☰</span></li>`).join(''); }; fileInput.addEventListener('change_custom', () => { document.getElementById('file-list-display').style.display='none'; imageFiles = Array.from(fileInput.files); renderImageFileList(); }); let imgDragSrcEl = null; imageFileList.addEventListener('dragstart', (e) => { imgDragSrcEl = e.target; e.target.classList.add('dragging'); }); imageFileList.addEventListener('dragover', (e) => e.preventDefault()); imageFileList.addEventListener('drop', (e) => { e.preventDefault(); if (imgDragSrcEl && imgDragSrcEl.closest('li') && e.target.closest('li')) { const target = e.target.closest('li'); const srcIndex = parseInt(imgDragSrcEl.dataset.index); const targetIndex = parseInt(target.dataset.index); const movedFile = imageFiles.splice(srcIndex, 1)[0]; imageFiles.splice(targetIndex, 0, movedFile); renderImageFileList(); } imgDragSrcEl?.classList.remove('dragging'); }); processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Creating...', async () => { const pdfDoc = await PDFDocument.create(); const pageSize = document.getElementById('page-size').value; const orientation = document.getElementById('orientation').value; let pageDims = PageSizes[pageSize] || PageSizes.A4; if (orientation === 'landscape') pageDims = [pageDims[1], pageDims[0]]; for (const file of imageFiles) { const imgBytes = await file.arrayBuffer(); const image = file.type === 'image/png' ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes); const scaled = image.scaleToFit(pageDims[0] - 50, pageDims[1] - 50); const page = pdfDoc.addPage(pageDims); page.drawImage(image, { x: (page.getWidth() - scaled.width) / 2, y: (page.getHeight() - scaled.height) / 2, width: scaled.width, height: scaled.height }); } const pdfBytes = await pdfDoc.save(); downloadBlob(new Blob([pdfBytes]), 'krx_images.pdf'); })); break; }
+                                case 'video-converter': { let ffmpeg; const logEl = document.getElementById('ffmpeg-log'); const loadFFmpeg = async () => { if (!ffmpeg || !ffmpeg.isLoaded()) { ffmpeg = createFFmpeg({ log: true }); ffmpeg.setLogger(({ type, message }) => { logEl.style.display = 'block'; logEl.textContent += message + '\n'; logEl.scrollTop = logEl.scrollHeight; }); setButtonState(processBtn, 'Loading Core...', true); await ffmpeg.load(); setButtonState(processBtn, 'Convert Video', false); } }; fileInput.addEventListener('change_custom', loadFFmpeg); processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Converting...', async () => { if (!ffmpeg || !ffmpeg.isLoaded()) { await loadFFmpeg(); } if (!fileInput.files[0]) throw new Error('Please select a video file.'); const file = fileInput.files[0]; const outFormat = document.getElementById('output-format').value; const outFilename = `output.${outFormat}`; ffmpeg.FS('writeFile', file.name, await fetchFile(file)); let command = ['-i', file.name]; if (outFormat === 'gif') { command.push('-vf', 'fps=10,scale=320:-1:flags=lanczos', '-c:v', 'gif'); } command.push(outFilename); await ffmpeg.run(...command); const data = ffmpeg.FS('readFile', outFilename); const mimeTypes = { mp4: 'video/mp4', mkv: 'video/x-matroska', avi: 'video/x-msvideo', mov: 'video/quicktime', gif: 'image/gif' }; downloadBlob(new Blob([data.buffer], { type: mimeTypes[outFormat] }), `krx_converted.${outFormat}`); })); break; }
+                                case 'merge-image': { let mergeImageFiles = []; const mergeImageFileList = document.getElementById('image-file-list'); const renderMergeImageFileList = () => { mergeImageFileList.innerHTML = mergeImageFiles.map((file, index) => `<li data-index="${index}" draggable="true"><span>${file.name}</span><span>☰</span></li>`).join(''); }; fileInput.addEventListener('change_custom', () => { document.getElementById('file-list-display').style.display='none'; mergeImageFiles = Array.from(fileInput.files); renderMergeImageFileList(); }); let mergeImgDragSrcEl = null; mergeImageFileList.addEventListener('dragstart', (e) => { mergeImgDragSrcEl = e.target; e.target.classList.add('dragging'); }); mergeImageFileList.addEventListener('dragover', (e) => e.preventDefault()); mergeImageFileList.addEventListener('drop', (e) => { e.preventDefault(); if (mergeImgDragSrcEl && mergeImgDragSrcEl.closest('li') && e.target.closest('li')) { const target = e.target.closest('li'); const srcIndex = parseInt(mergeImgDragSrcEl.dataset.index); const targetIndex = parseInt(target.dataset.index); const movedFile = mergeImageFiles.splice(srcIndex, 1)[0]; mergeImageFiles.splice(targetIndex, 0, movedFile); renderMergeImageFileList(); } mergeImgDragSrcEl?.classList.remove('dragging'); }); processBtn.addEventListener('click', () => handleAsyncClick(processBtn, 'Merging...', async () => { const direction = document.getElementById('merge-direction').value; let totalW = 0, totalH = 0; const images = await Promise.all(mergeImageFiles.map(file => new Promise((resolve, reject) => { const img = new Image(); img.onload = () => { if(direction === 'horizontal') { totalW += img.width; totalH = Math.max(totalH, img.height); } else { totalW = Math.max(totalW, img.width); totalH += img.height; } resolve(img); }; img.onerror = reject; img.src = URL.createObjectURL(file); }))); const canvas = document.createElement('canvas'); canvas.width = totalW; canvas.height = totalH; const ctx = canvas.getContext('2d'); let currentX = 0, currentY = 0; images.forEach(img => { ctx.drawImage(img, currentX, currentY); if(direction === 'horizontal') currentX += img.width; else currentY += img.height; URL.revokeObjectURL(img.src); }); canvas.toBlob(blob => downloadBlob(blob, 'krx_merged_image.png'), 'image/png'); })); break; }
+                                case 'add-watermark': { let watermarkImage; fileInput.addEventListener('change_custom', () => { if (fileInput.files[0]) { document.getElementById('watermark-options').style.display = 'grid'; const reader = new FileReader(); reader.onload = e => { watermarkImage = new Image(); watermarkImage.src = e.target.result; }; reader.readAsDataURL(fileInput.files[0]); processBtn.style.display = 'block'; } }); processBtn?.addEventListener('click', () => { if (!watermarkImage || !watermarkImage.src) { showToast('Please select an image first.'); return; } const canvas = document.createElement('canvas'); canvas.width = watermarkImage.width; canvas.height = watermarkImage.height; const ctx = canvas.getContext('2d'); ctx.drawImage(watermarkImage, 0, 0); const text = document.getElementById('watermark-text').value; const font = document.getElementById('watermark-font').value; const size = document.getElementById('watermark-size').value; const color = document.getElementById('watermark-color').value; const opacity = document.getElementById('watermark-opacity').value; const mode = document.getElementById('watermark-mode').value; ctx.font = `bold ${size}px ${font}`; ctx.fillStyle = color; ctx.globalAlpha = opacity; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (mode === 'tile') { const textWidth = ctx.measureText(text).width; ctx.save(); ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(-25 * Math.PI / 180); for (let y = -canvas.height; y < canvas.height; y += size * 3) { for (let x = -canvas.width; x < canvas.width; x += textWidth + 100) { ctx.fillText(text, x, y); } } ctx.restore(); } else { ctx.fillText(text, canvas.width / 2, canvas.height / 2); } canvas.toBlob(blob => downloadBlob(blob, 'krx_watermarked.png'), 'image/png'); }); break; }
+                                case 'word-counter': { const textInput = document.getElementById('text-input'); textInput.addEventListener('input', () => { const text = textInput.value; const resultEl = document.getElementById('word-count-result'); const keywordList = document.getElementById('keyword-list'); const words = text.trim().split(/\s+/).filter(Boolean); const wordCount = words.length; resultEl.innerHTML = `<div>Words: <span>${wordCount}</span></div><div>Characters: <span>${text.length}</span></div><div>Sentences: <span>${(text.match(/[.!?…]+/g) || []).length}</span></div><div>Paragraphs: <span>${text.split(/\n\s*\n/).filter(p => p.trim().length > 0).length}</span></div><div>Reading Time: <span>${Math.ceil(wordCount / 200)} min</span></div><div>Speaking Time: <span>${Math.ceil(wordCount / 150)} min</span></div>`; const wordMap = {}; words.forEach(word => { const w = word.toLowerCase().replace(/[.,!?;:"'()]/g, ''); if (w.length > 2) wordMap[w] = (wordMap[w] || 0) + 1; }); const sortedKeywords = Object.entries(wordMap).sort((a, b) => b[1] - a[1]); keywordList.innerHTML = sortedKeywords.slice(0, 5).map(kw => `<li>${kw[0]}: <span>${kw[1]}</span></li>`).join('') || '<li>-</li>'; }); document.getElementById('copy-text-btn').addEventListener('click', () => navigator.clipboard.writeText(textInput.value).then(() => showToast('Text copied!'))); break; }
+                                case 'json-formatter': { const jsonInput = document.getElementById('json-input'); const lineNumbers = document.getElementById('line-numbers'); const updateLineNumbers = () => { const lines = jsonInput.value.split('\n').length; lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>'); }; jsonInput.addEventListener('input', updateLineNumbers); jsonInput.addEventListener('scroll', () => { lineNumbers.scrollTop = jsonInput.scrollTop; }); document.getElementById('format-json-btn').addEventListener('click', () => { try { const parsed = JSON.parse(jsonInput.value); jsonInput.value = JSON.stringify(parsed, null, 4); showToast('JSON formatted!'); updateLineNumbers(); } catch (e) { showToast('Invalid JSON: ' + e.message); } }); document.getElementById('copy-json-btn').addEventListener('click', () => { if (jsonInput.value) navigator.clipboard.writeText(jsonInput.value).then(() => showToast('JSON copied!')); }); updateLineNumbers(); break; }
+                                case 'text-to-speech': { const ttsText = document.getElementById('tts-text'); const ttsVoiceSelect = document.getElementById('tts-voice'); const synth = window.speechSynthesis; let voices = []; function populateVoiceList() { voices = synth.getVoices(); ttsVoiceSelect.innerHTML = voices.map(voice => `<option data-name="${voice.name}">${voice.name} (${voice.lang})</option>`).join(''); if(voices.length > 0) ttsVoiceSelect.style.display = 'block'; } populateVoiceList(); if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoiceList; document.getElementById('speak-btn').addEventListener('click', () => { if (synth.speaking) synth.cancel(); if(!ttsText.value.trim()) return; const utterThis = new SpeechSynthesisUtterance(ttsText.value); const selectedOption = ttsVoiceSelect.selectedOptions[0]?.getAttribute('data-name'); utterThis.voice = voices.find(voice => voice.name === selectedOption) || voices[0]; utterThis.pitch = document.getElementById('tts-pitch').value; utterThis.rate = document.getElementById('tts-rate').value; synth.speak(utterThis); }); document.getElementById('pause-btn').addEventListener('click', () => synth.pause()); document.getElementById('resume-btn').addEventListener('click', () => synth.resume()); break; }
+                                case 'speech-to-text': { const sttBtn = document.getElementById('stt-btn'); const sttOutput = document.getElementById('stt-output'); const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SpeechRecognition) { sttBtn.textContent = "API Not Supported"; sttBtn.disabled = true; break; } const recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = true; recognition.onresult = (event) => { let interimTranscript = ''; let finalTranscript = ''; for (let i = event.resultIndex; i < event.results.length; ++i) { if (event.results[i].isFinal) { finalTranscript += event.results[i][0].transcript; } else { interimTranscript += event.results[i][0].transcript; } } sttOutput.value = sttOutput.dataset.baseText + finalTranscript + interimTranscript; }; sttBtn.addEventListener('click', () => { if (sttBtn.textContent.includes('Start')) { sttOutput.dataset.baseText = sttOutput.value; recognition.start(); sttBtn.textContent = 'Stop Listening'; } else { recognition.stop(); sttBtn.textContent = 'Start Listening'; } }); document.getElementById('copy-stt-btn').addEventListener('click', () => navigator.clipboard.writeText(sttOutput.value).then(() => showToast('Transcription copied!'))); break; }
+                                case 'age-calculator': { document.getElementById('calculate-age-btn').addEventListener('click', () => { const birthDateInput = document.getElementById('birthdate').value; if(!birthDateInput) { showToast('Please enter a valid date.'); return; } const birthDate = new Date(birthDateInput); if (isNaN(birthDate.getTime())) { showToast('Please enter a valid date.'); return; } if (currentIntervalId) clearInterval(currentIntervalId); const updateAge = () => { const now = new Date(); let years = now.getFullYear() - birthDate.getFullYear(); let months = now.getMonth() - birthDate.getMonth(); let days = now.getDate() - birthDate.getDate(); let hours = now.getHours() - birthDate.getHours(); let minutes = now.getMinutes() - birthDate.getMinutes(); let seconds = now.getSeconds() - birthDate.getSeconds(); if (seconds < 0) { minutes--; seconds += 60; } if (minutes < 0) { hours--; minutes += 60; } if (hours < 0) { days--; hours += 24; } if (days < 0) { months--; const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0); days += prevMonth.getDate(); } if (months < 0) { years--; months += 12; } document.getElementById('age-result').innerHTML = `You are: <br><span>${years}</span> years, <span>${months}</span> months, <span>${days}</span> days<br><span>${hours}</span> hours, <span>${minutes}</span> minutes, <span>${seconds}</span> seconds old.`; }; updateAge(); currentIntervalId = setInterval(updateAge, 1000); }); break; }
+                                case 'bmi-calculator': { const bmiUnits = document.getElementById('bmi-units'); const bmiHeightLabel = document.querySelector('label[for="bmi-height"]'); const bmiWeightLabel = document.querySelector('label[for="bmi-weight"]'); bmiUnits.addEventListener('change', () => { if (bmiUnits.value === 'metric') { bmiHeightLabel.textContent = 'Height (cm)'; bmiWeightLabel.textContent = 'Weight (kg)'; } else { bmiHeightLabel.textContent = 'Height (in)'; bmiWeightLabel.textContent = 'Weight (lbs)'; } }); document.getElementById('calculate-bmi-btn').addEventListener('click', () => { let height = parseFloat(document.getElementById('bmi-height').value); let weight = parseFloat(document.getElementById('bmi-weight').value); if (isNaN(height) || isNaN(weight) || height <= 0 || weight <= 0) { showToast("Please enter valid height and weight."); return; } if (bmiUnits.value === 'imperial') { height *= 2.54; weight *= 0.453592; } const bmi = weight / ((height / 100) ** 2); let category = ''; let indicatorPos = 0; if (bmi < 18.5) { category = 'Underweight'; indicatorPos = (bmi / 18.5) * 25; } else if (bmi < 25) { category = 'Normal'; indicatorPos = 25 + ((bmi-18.5)/6.5) * 25; } else if (bmi < 30) { category = 'Overweight'; indicatorPos = 50 + ((bmi-25)/5) * 25; } else { category = 'Obesity'; indicatorPos = 75 + Math.min(25, ((bmi-30)/10) * 25); } document.getElementById('bmi-result').innerHTML = `Your BMI is <span>${bmi.toFixed(2)}</span>. Category: <span>${category}</span>`; const indicator = document.getElementById('bmi-indicator'); document.getElementById('bmi-result-bar').style.display = 'block'; indicator.style.left = `${Math.min(100, Math.max(0, indicatorPos))}%`; }); break; }
+                                case 'unit-converter': { const categorySelect = document.getElementById('unit-category'); const fromSelect = document.getElementById('from-unit-select'); const toSelect = document.getElementById('to-unit-select'); const fromValue = document.getElementById('from-unit-value'); const toValue = document.getElementById('to-unit-value'); const units = { length: { Meter: 1, Kilometer: 1000, Foot: 0.3048, Inch: 0.0254, Mile: 1609.34 }, mass: { Gram: 1, Kilogram: 1000, Pound: 453.592, Ounce: 28.3495 }, temperature: { Celsius: v => v, Fahrenheit: v => (v * 9/5) + 32, Kelvin: v => v + 273.15, fromBase: { Celsius: v => v, Fahrenheit: v => (v - 32) * 5/9, Kelvin: v => v - 273.15 } }, volume: { Liter: 1, Milliliter: 0.001, 'US Gallon': 3.78541 }, speed: {'km/h': 1, 'm/s': 0.277778, 'mph': 0.621371}}; function populateUnits() { const category = categorySelect.value; fromSelect.innerHTML = toSelect.innerHTML = ''; const unitKeys = Object.keys(units[category]).filter(k => k !== 'fromBase'); unitKeys.forEach(unit => { fromSelect.innerHTML += `<option value="${unit}">${unit}</option>`; toSelect.innerHTML += `<option value="${unit}">${unit}</option>`; }); toSelect.selectedIndex = unitKeys.length > 1 ? 1 : 0; convertUnits(); } function convertUnits() { const category = categorySelect.value; const fromUnit = fromSelect.value; const toUnit = toSelect.value; const val = parseFloat(fromValue.value); if (isNaN(val)) return; let result; if (category === 'temperature') { const baseValue = units.temperature.fromBase[fromUnit](val); result = units.temperature[toUnit](baseValue); } else { const baseValue = val * units[category][fromUnit]; result = baseValue / units[category][toUnit]; } toValue.value = Number(result.toFixed(4)); } [categorySelect, fromSelect, toSelect, fromValue].forEach(el => el.addEventListener('input', convertUnits)); populateUnits(); break; }
+                                case 'password-generator': { const passResultBox = document.getElementById('password-result'); const strengthBar = document.getElementById('strength-bar-inner'); const updateStrength = (password) => { let score = 0; if (password.length > 8) score++; if (password.length > 12) score++; if (/[A-Z]/.test(password)) score++; if (/[a-z]/.test(password)) score++; if (/[0-9]/.test(password)) score++; if (/[^A-Za-z0-9]/.test(password)) score++; const width = (score / 6) * 100; strengthBar.style.width = `${width}%`; if (score < 3) strengthBar.style.backgroundColor = '#ff4d4d'; else if (score < 5) strengthBar.style.backgroundColor = '#ffc107'; else strengthBar.style.backgroundColor = '#28a745'; }; document.getElementById('generate-pass-btn').addEventListener('click', () => { const length = document.getElementById('length').value; let uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', lowercase = 'abcdefghijklmnopqrstuvwxyz', numbers = '0123456789', symbols = '!@#$%^&*()_+~`|}{[]:;?><,./-='; if(document.getElementById('exclude-similar').checked){ [uppercase, lowercase, numbers] = [uppercase.replace(/[IO]/g,''), lowercase.replace(/[l]/g, ''), numbers.replace(/[01]/g,'')]; } let charset = ''; if (document.getElementById('uppercase').checked) charset += uppercase; if (document.getElementById('lowercase').checked) charset += lowercase; if (document.getElementById('numbers').checked) charset += numbers; if (document.getElementById('symbols').checked) charset += symbols; if (charset.length === 0) { passResultBox.textContent = 'Please select a character set.'; updateStrength(''); return; } let password = ''; for (let i = 0; i < length; i++) password += charset.charAt(Math.floor(Math.random() * charset.length)); passResultBox.textContent = password; updateStrength(password); }); document.getElementById('copy-pass-btn').addEventListener('click', () => { if (passResultBox.textContent && !passResultBox.textContent.startsWith('Click')) navigator.clipboard.writeText(passResultBox.textContent).then(() => showToast('Password copied!')); }); break; }
+                                case 'timer-stopwatch': { let timerState = { mode: 'stopwatch', running: false, startTime: 0, elapsed: 0, intervalId: null, initialTime: 0, laps: [] }; const display = document.getElementById('timer-display'), startBtn = document.getElementById('timer-start'), stopBtn = document.getElementById('timer-stop'), resetBtn = document.getElementById('timer-reset'), lapBtn = document.getElementById('timer-lap'), lapsContainer = document.getElementById('laps-container'); const timerInputs = document.getElementById('timer-inputs'); function formatTime(ms) { const d = new Date(ms); return `${String(Math.floor(ms/60000)).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${String(d.getMilliseconds()).padStart(3,'0')}`; } function updateDisplay() { const now = Date.now(); if (timerState.mode === 'stopwatch') { display.textContent = formatTime(timerState.elapsed + (now - timerState.startTime)); } else { const remaining = Math.max(0, timerState.initialTime - (timerState.elapsed + (now - timerState.startTime))); display.textContent = formatTime(remaining); if (remaining === 0) { stopTimer(); showToast("Timer finished!"); } } } function startTimer() { if (timerState.running) return; if(timerState.mode === 'timer' && timerState.initialTime === 0) { resetTimer(); if(timerState.initialTime === 0) { showToast("Set timer duration first."); return; } } timerState.running = true; timerState.startTime = Date.now(); currentIntervalId = timerState.intervalId = setInterval(updateDisplay, 47); } function stopTimer() { if (!timerState.running) return; timerState.running = false; clearInterval(timerState.intervalId); currentIntervalId = null; timerState.elapsed += Date.now() - timerState.startTime; } function resetTimer() { stopTimer(); timerState.elapsed = 0; timerState.laps = []; lapsContainer.innerHTML = '<h4>Laps</h4>'; lapsContainer.style.display='none'; if (timerState.mode === 'stopwatch') { display.textContent = '00:00:000'; } else { const mins = parseInt(document.getElementById('timer-minutes').value) || 0; const secs = parseInt(document.getElementById('timer-seconds').value) || 0; timerState.initialTime = (mins * 60 + secs) * 1000; display.textContent = formatTime(timerState.initialTime); } } function recordLap() { if (!timerState.running) return; const lapTime = timerState.elapsed + (Date.now() - timerState.startTime); timerState.laps.push(lapTime); lapsContainer.style.display = 'block'; lapsContainer.innerHTML = '<h4>Laps</h4>' + timerState.laps.map((lap, i) => `<div>Lap ${i+1}: <span>${formatTime(lap - (timerState.laps[i-1] || 0))}</span> (<span>${formatTime(lap)}</span>)</div>`).reverse().join(''); } startBtn.addEventListener('click', startTimer); stopBtn.addEventListener('click', stopTimer); resetBtn.addEventListener('click', resetTimer); lapBtn.addEventListener('click', recordLap); document.getElementById('timer-mode').addEventListener('change', (e) => { timerState.mode = e.target.value; const isStopwatch = timerState.mode === 'stopwatch'; lapBtn.style.display = isStopwatch ? 'block' : 'none'; timerInputs.style.display = isStopwatch ? 'none' : 'grid'; resetTimer(); }); break; }
+                            }
+                        };
+                        originalLogic();
+                        break;
+                    }
+                }
+            };
+            
+            populateTools();
+            // --- Final UI event listeners ---
+            ui.hamburger.addEventListener('click', () => { ui.navLinks.classList.toggle('active'); ui.hamburger.classList.toggle('active'); if (window.innerWidth <= 768) ui.sidebar.classList.toggle('active'); });
+            ui.sidebarToggle.addEventListener('click', () => { ui.sidebar.classList.toggle('collapsed'); ui.mainContent.style.marginLeft = ui.sidebar.classList.contains('collapsed') ? '70px' : '260px'; });
+            function audioBufferToWav(buffer) {
+                const numOfChan = buffer.numberOfChannels, len = buffer.length * numOfChan * 2 + 44, wavBuffer = new ArrayBuffer(len), view = new DataView(wavBuffer), channels = [], sampleRate = buffer.sampleRate;
+                let offset = 0; const writeString = (s) => { for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i)); offset += s.length; };
+                writeString('RIFF'); view.setUint32(4, 36 + buffer.length * numOfChan * 2, true); writeString('WAVE'); writeString('fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numOfChan, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2 * numOfChan, true); view.setUint16(32, numOfChan * 2, true); view.setUint16(34, 16, true); writeString('data'); view.setUint32(40, buffer.length * numOfChan * 2, true);
+                for (let i = 0; i < numOfChan; i++) channels.push(buffer.getChannelData(i));
+                offset = 44;
+                for (let i = 0; i < buffer.length; i++) { for (let j = 0; j < numOfChan; j++) { let s = Math.max(-1, Math.min(1, channels[j][i])); view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true); offset += 2; } }
+                return new Blob([view], { type: 'audio/wav' });
+            }
+        });
+    </script>
+</body>
+</html>
+```

@@ -24,11 +24,27 @@
     <style>
         :root {
             --bg-dark-blue: #0D0D2B; --glow-purple: #1F1F3B; --accent-purple: #A259FF; --accent-pink: #FF2D9C; --bright-blue: #00A8FF; --text-white: #FFFFFF; --text-gray: #AFAFAF; --ui-black: #1B1B2F; --sidebar-bg: #12151a; --glow-shadow: 0 0 15px rgba(162, 89, 255, 0.5); --glow-shadow-blue: 0 0 15px rgba(0, 168, 255, 0.6);
+
+            /* --- CHANGE: Fluid Font Size --- */
+            --font-size-base: clamp(14px, 1.2vw + 0.5rem, 16px);
+            --font-size-h1: clamp(2rem, 5vw, 3.5rem);
+            --font-size-h2: clamp(1.5rem, 4vw, 2.5rem);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Orbitron', sans-serif; background-color: var(--bg-dark-blue); background-image: radial-gradient(circle at 100% 0%, var(--glow-purple) 0%, transparent 40%), radial-gradient(circle at 0% 100%, var(--glow-purple) 0%, transparent 40%); color: var(--text-white); line-height: 1.6; overflow-x: hidden; }
+        body { 
+            font-family: 'Orbitron', sans-serif; 
+            background-color: var(--bg-dark-blue); 
+            background-image: radial-gradient(circle at 100% 0%, var(--glow-purple) 0%, transparent 40%), radial-gradient(circle at 0% 100%, var(--glow-purple) 0%, transparent 40%); 
+            color: var(--text-white); 
+            line-height: 1.6; 
+            overflow-x: hidden;
+            /* --- CHANGE: Apply fluid font size --- */
+            font-size: var(--font-size-base);
+        }
         h1, h2, h3 { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { font-size: var(--font-size-h1); }
+        h2 { font-size: var(--font-size-h2); }
         a { color: var(--accent-purple); text-decoration: none; transition: color 0.3s ease; }
         a:hover { color: var(--text-white); }
         .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: rgba(13, 13, 43, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(162, 89, 255, 0.2); position: sticky; top: 0; z-index: 1000; }
@@ -42,16 +58,36 @@
         .logo-svg .x-shape { fill: var(--bright-blue); transition: all 0.3s ease; filter: drop-shadow(0 0 5px var(--bright-blue)); animation: rotateIn 0.7s 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; }
         .logo:hover .k-shape { transform: translateX(-2px); }
         .logo:hover .x-shape { transform: rotate(10deg) scale(1.1); }
-        .nav-links { display: flex; list-style: none; }
-        .nav-links li { margin-left: 2rem; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; /* --- CHANGE: Use gap for spacing --- */ }
+        .nav-links li { margin-left: 0; /* --- CHANGE: Removed margin --- */ }
         .nav-link { font-weight: 700; text-transform: uppercase; position: relative; padding-bottom: 5px; cursor: pointer; }
         .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); transition: width 0.3s ease; box-shadow: 0 0 8px #D14DFF; }
         .nav-link:hover::after { width: 100%; }
-        .hamburger { display: none; background: none; border: none; cursor: pointer; }
+        .hamburger { display: none; background: none; border: none; cursor: pointer; z-index: 1001; /* --- CHANGE: Ensure it's on top --- */ }
         .hamburger .bar { display: block; width: 25px; height: 3px; margin: 5px auto; background-color: var(--text-white); transition: all 0.3s ease-in-out; }
-        .app-container { display: flex; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); padding: 1.5rem; height: calc(100vh - 70px); position: sticky; top: 70px; box-shadow: 5px 0 15px rgba(162, 89, 255, 0.1); transition: all 0.3s ease; overflow-y: auto; }
-        .sidebar.collapsed { width: 70px; padding: 1.5rem 0; }
+        
+        /* --- CHANGE: Switched to CSS Grid for more flexible main layout --- */
+        .app-container {
+            display: grid;
+            grid-template-columns: auto 1fr; /* Sidebar takes its own width, main content takes the rest */
+            position: relative;
+        }
+        .sidebar {
+            width: 260px; /* Max width */
+            background-color: var(--sidebar-bg);
+            padding: 1.5rem;
+            height: calc(100vh - 70px);
+            position: sticky;
+            top: 70px;
+            box-shadow: 5px 0 15px rgba(162, 89, 255, 0.1);
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 1.5rem 0;
+        }
+        /* --- CHANGE: Removed absolute positioning which is less flexible --- */
         .sidebar.collapsed .tool-link span, .sidebar.collapsed .tool-section h3 { display: none; }
         .sidebar.collapsed .tool-link { justify-content: center; }
         .sidebar.collapsed .sidebar-toggle { transform: rotate(180deg); }
@@ -65,16 +101,19 @@
         .tool-link:hover { color: var(--text-white); background-color: var(--ui-black); }
         .tool-link:hover::before { left: 0; }
         .tool-link:hover svg { transform: scale(1.1); filter: drop-shadow(0 0 5px var(--bright-blue)); }
-        .main-content { flex: 1; padding: 2rem; transition: margin-left 0.3s ease; }
-        .hero-section { text-align: center; padding: 4rem 1rem; border-radius: 15px; background: linear-gradient(135deg, rgba(31, 31, 59, 0.5), rgba(13, 13, 43, 0.5)); border: 1px solid rgba(162, 89, 255, 0.2); margin-bottom: 3rem; }
-        .hero-headline { font-size: 3rem; text-shadow: 0 0 20px var(--accent-purple), 0 0 10px var(--accent-pink); margin-bottom: 1rem; }
+        .main-content {
+            padding: clamp(1rem, 4vw, 2rem); /* --- CHANGE: Fluid padding --- */
+            transition: margin-left 0.3s ease;
+        }
+        .hero-section { text-align: center; padding: clamp(2rem, 8vw, 4rem) 1rem; border-radius: 15px; background: linear-gradient(135deg, rgba(31, 31, 59, 0.5), rgba(13, 13, 43, 0.5)); border: 1px solid rgba(162, 89, 255, 0.2); margin-bottom: 3rem; }
+        .hero-headline { /* --- CHANGE: font size is now controlled by root variable --- */ margin-bottom: 1rem; text-shadow: 0 0 20px var(--accent-purple), 0 0 10px var(--accent-pink); }
         .hero-subheadline { font-size: 1.2rem; color: var(--text-gray); max-width: 600px; margin: 0 auto 2rem; }
         .cta-button { padding: 12px 30px; border-radius: 50px; font-weight: 700; text-transform: uppercase; border: 2px solid transparent; transition: all 0.3s ease; cursor: pointer; }
         .cta-button.primary { background-color: var(--accent-purple); color: var(--text-white); box-shadow: var(--glow-shadow); }
         .cta-button.primary:hover { transform: translateY(-3px); box-shadow: 0 0 25px var(--accent-purple), 0 0 35px #D14DFF; }
         .cta-button.secondary { border-color: var(--accent-purple); color: var(--accent-purple); }
         .cta-button.secondary:hover { background-color: var(--accent-purple); color: var(--text-white); }
-        .section-title { text-align: center; margin-bottom: 2rem; font-size: 2rem; position: relative; padding-bottom: 10px; }
+        .section-title { text-align: center; margin-bottom: 2rem; /* --- CHANGE: font size is now controlled by root variable --- */ position: relative; padding-bottom: 10px; }
         .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 3px; background: linear-gradient(90deg, var(--accent-purple), var(--bright-blue)); border-radius: 2px; }
         .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
         .tool-card { background-color: var(--ui-black); padding: 1.5rem; border-radius: 10px; border: 1px solid rgba(162, 89, 255, 0.2); transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; }
@@ -98,9 +137,9 @@
         .social-links a svg { width: 24px; height: 24px; fill: var(--text-gray); transition: all 0.3s ease; }
         .social-links a:hover svg { fill: var(--text-white); transform: scale(1.2); filter: drop-shadow(0 0 8px var(--bright-blue)); }
         .footer-bottom { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(162, 89, 255, 0.2); color: var(--text-gray); font-size: 0.9rem; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 1rem; /* --- CHANGE: Added padding --- */ }
         body.modal-open .modal-overlay { opacity: 1; pointer-events: all; }
-        .modal { background-color: var(--ui-black); border: 1px solid var(--accent-purple); border-radius: 15px; box-shadow: 0 0 40px var(--accent-purple); width: 90%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal { background-color: var(--ui-black); border: 1px solid var(--accent-purple); border-radius: 15px; box-shadow: 0 0 40px var(--accent-purple); width: 100%; /* --- CHANGE: Use 100% of padded overlay --- */ max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; }
         body.modal-open .modal { transform: scale(1); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(162, 89, 255, 0.2); }
         .modal-close { background: none; border: none; color: var(--text-gray); font-size: 2.5rem; cursor: pointer; line-height: 1; transition: all 0.3s ease; }
@@ -126,7 +165,7 @@
         .copy-btn { padding: 5px 8px; font-size: 0.9rem; background-color: var(--bright-blue); border: none; border-radius: 5px; cursor: pointer; color: var(--bg-dark-blue); }
         .processing-btn { width: 100%; padding: 12px; font-size: 1.2rem; margin-top: 1rem; }
         .processing-btn:disabled { background: var(--text-gray); cursor: not-allowed; box-shadow: none; }
-        .button-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .button-group { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; /* --- CHANGE: Allow buttons to wrap --- */ }
         .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, var(--accent-purple), var(--bright-blue)); color: white; padding: 15px 30px; border-radius: 50px; z-index: 3000; opacity: 0; visibility: hidden; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 0 20px var(--bright-blue); }
         .toast.show { opacity: 1; visibility: visible; bottom: 30px; }
         #ffmpeg-log { background-color: #000; color: #0f0; font-family: monospace; height: 150px; overflow-y: scroll; padding: 10px; border-radius: 5px; margin-top: 1rem; white-space: pre-wrap; display: none; }
@@ -148,10 +187,76 @@
         #passport-live-preview { border: 1px dashed var(--bright-blue); background-color: rgba(0,0,0,0.2); }
         .cropper-container { position: relative; }
         #cropper-guide-svg { position: absolute; top:0; left:0; width: 100%; height: 100%; pointer-events: none; }
-        #audio-controls { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; }
+        #audio-controls { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; flex-wrap: wrap; /* --- CHANGE: Allow controls to wrap --- */ }
         #audio-time { font-size: 1.2rem; color: var(--bright-blue); }
 
-        @media (max-width: 768px) { .footer-content { flex-direction: column; text-align: center; } .footer-section { text-align: center; } .social-links { justify-content: center; } .color-picker-layout, .passport-layout { grid-template-columns: 1fr; } }
+        /* --- CHANGE: ADDED NEW BREAKPOINT FOR TABLETS & SMALL LAPTOPS --- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 70px; /* Align with header bottom */
+                z-index: 1100;
+                transition: left 0.3s ease-in-out;
+                height: calc(100vh - 70px);
+            }
+            .sidebar.active { /* This class will be toggled by JS */
+                left: 0;
+            }
+            .sidebar.collapsed {
+                display: none; /* Hide collapsed sidebar on smaller screens */
+            }
+            .sidebar-toggle {
+                display: none; /* Hide the > button as it's not needed */
+            }
+            .app-container {
+                grid-template-columns: 1fr; /* Main content takes full width */
+            }
+            .main-content {
+                margin-left: 0 !important; /* Override JS margin setting */
+            }
+            .hamburger {
+                display: block;
+            }
+            .nav-links {
+                position: fixed;
+                left: -100%;
+                top: 70px;
+                gap: 0;
+                flex-direction: column;
+                background-color: var(--sidebar-bg);
+                width: 250px;
+                height: 100vh;
+                text-align: center;
+                transition: 0.3s;
+                padding-top: 2rem;
+            }
+            .nav-links li {
+                padding: 1rem 0;
+            }
+            .nav-links.active {
+                left: 0;
+            }
+            .hamburger.active .bar:nth-child(2) {
+                opacity: 0;
+            }
+            .hamburger.active .bar:nth-child(1) {
+                transform: translateY(8px) rotate(45deg);
+            }
+            .hamburger.active .bar:nth-child(3) {
+                transform: translateY(-8px) rotate(-45deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content { flex-direction: column; text-align: center; } 
+            .footer-section { text-align: center; } 
+            .social-links { justify-content: center; } 
+            .color-picker-layout, .passport-layout { grid-template-columns: 1fr; } 
+            .contrast-checker-grid {
+                grid-template-columns: 1fr; /* Stack contrast checker items */
+            }
+        }
     </style>
 </head>
 <body>
@@ -171,7 +276,7 @@
             </svg>
             <span>KRX</span>
         </a>
-        <nav class="main-nav"><ul class="nav-links">
+        <nav class="main-nav"><ul class="nav-links" id="nav-links">
             <li><a href="#" class="nav-link">Home</a></li>
             <li><a href="#tools" class="nav-link">Tools</a></li>
             <li><a href="#" class="nav-link" data-tool="about">About</a></li>
@@ -264,7 +369,7 @@
                 modalClose: document.getElementById('modal-close-btn'),
                 toast: document.getElementById('toast-notification'),
                 hamburger: document.getElementById('hamburger-menu'),
-                navLinks: document.querySelector('.nav-links'),
+                navLinks: document.getElementById('nav-links'), // Changed from querySelector
                 sidebar: document.getElementById('sidebar'),
                 sidebarToggle: document.getElementById('sidebar-toggle'),
                 mainContent: document.getElementById('main-content'),
@@ -652,7 +757,7 @@
                             const trimmedLength = endSample - startSample;
                             if (trimmedLength <= 0) throw new Error('End time must be after start time.');
                             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                            const trimmedBuffer = audio.createBuffer(originalBuffer.numberOfChannels, trimmedLength, sampleRate);
+                            const trimmedBuffer = audioContext.createBuffer(originalBuffer.numberOfChannels, trimmedLength, sampleRate);
                             for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
                                 trimmedBuffer.copyToChannel(originalBuffer.getChannelData(i).subarray(startSample, endSample), i);
                             }
@@ -702,8 +807,21 @@
             
             populateTools();
             // --- Final UI event listeners ---
-            ui.hamburger.addEventListener('click', () => { ui.navLinks.classList.toggle('active'); ui.hamburger.classList.toggle('active'); if (window.innerWidth <= 768) ui.sidebar.classList.toggle('active'); });
-            ui.sidebarToggle.addEventListener('click', () => { ui.sidebar.classList.toggle('collapsed'); ui.mainContent.style.marginLeft = ui.sidebar.classList.contains('collapsed') ? '70px' : '260px'; });
+            ui.hamburger.addEventListener('click', () => { 
+                ui.navLinks.classList.toggle('active'); 
+                ui.hamburger.classList.toggle('active'); 
+                // Toggle sidebar along with nav on mobile for a unified experience
+                if (window.innerWidth <= 1024) {
+                    ui.sidebar.classList.toggle('active');
+                }
+            });
+            ui.sidebarToggle.addEventListener('click', () => { 
+                ui.sidebar.classList.toggle('collapsed');
+                // This will only affect desktop view now
+                if (window.innerWidth > 1024) {
+                    ui.mainContent.style.marginLeft = ui.sidebar.classList.contains('collapsed') ? '70px' : '260px';
+                }
+            });
             function audioBufferToWav(buffer) {
                 const numOfChan = buffer.numberOfChannels, len = buffer.length * numOfChan * 2 + 44, wavBuffer = new ArrayBuffer(len), view = new DataView(wavBuffer), channels = [], sampleRate = buffer.sampleRate;
                 let offset = 0; const writeString = (s) => { for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i)); offset += s.length; };
@@ -717,6 +835,16 @@
     </script>
     <script async="async" data-cfasync="false" src="//pl26880336.profitableratecpm.com/528eba60f5584c8d2516bac9bf02e872/invoke.js"></script>
 <div id="container-528eba60f5584c8d2516bac9bf02e872"></div>
+    <script type="text/javascript">
+	atOptions = {
+		'key' : '91de8e4473629987b2916f55c9d82bca',
+		'format' : 'iframe',
+		'height' : 300,
+		'width' : 160,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/91de8e4473629987b2916f55c9d82bca/invoke.js"></script>
 </body>
 </html>
 ```

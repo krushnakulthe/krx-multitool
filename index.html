@@ -257,6 +257,22 @@
                 grid-template-columns: 1fr; /* Stack contrast checker items */
             }
         }
+	    /* --- MOBILE BUTTON SIZE ADJUSTMENT --- */
+@media (max-width: 480px) {
+    .hero-section .cta-buttons {
+        display: flex;
+        flex-direction: column; /* Buttons ko ek ke neeche ek laayein */
+        align-items: center;
+        gap: 1rem; /* Unke beech thodi jagah banayein */
+    }
+
+    .hero-section .cta-button {
+        padding: 10px 25px; /* Thoda padding adjust karein */
+        font-size: 0.9rem;  /* Font size ko thoda chota karein */
+        width: 80%; /* Button ki chaudai set karein */
+        max-width: 280px; /* Maximum chaudai */
+    }
+}
     </style>
 </head>
 <body>
